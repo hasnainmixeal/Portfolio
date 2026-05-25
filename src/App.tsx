@@ -1,11 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Mail, MapPin, ExternalLink, Linkedin, Youtube } from 'lucide-react';
-const threeBackgroundPromise =
-  typeof window !== 'undefined' && !window.matchMedia('(max-width: 767px)').matches
-    ? import('./components/ThreeBackground')
-    : null;
-const ThreeBackground = lazy(() => threeBackgroundPromise ?? import('./components/ThreeBackground'));
+import ThreeBackground from './components/ThreeBackground';
 
 const assetUrl = (file: string) => {
   if (file === 'profile-pic.png' || file === 'profile-pic.webp') {
@@ -265,11 +261,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen bg-[#050505] text-[#F5F5F5] font-sans flex flex-col overflow-hidden selection:bg-white/20">
       
-      {isMobile ? <StaticBackdrop /> : (
-        <Suspense fallback={<StaticBackdrop />}>
-          <ThreeBackground />
-        </Suspense>
-      )}
+      {isMobile ? <StaticBackdrop /> : <ThreeBackground />}
       
       {/* Navigation Overlay */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-24 px-6 md:px-12 lg:px-24 flex justify-end items-center mix-blend-difference pointer-events-none">
