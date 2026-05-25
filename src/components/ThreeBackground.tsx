@@ -54,14 +54,16 @@ function MainShape() {
     const solidRef = useRef<THREE.Mesh>(null);
     const shardsRef = useRef<THREE.InstancedMesh>(null);
     const dummy = useMemo(() => new THREE.Object3D(), []);
+    const solidDetail: [number, number] = [128, 32];
+    const shardSampleStep = 6;
     
     // Generate fragments based on TorusKnot geometry
     const fragments = useMemo(() => {
-        const geom = new THREE.TorusKnotGeometry(1.5, 0.4, 32, 8);
+        const geom = new THREE.TorusKnotGeometry(1.5, 0.4, solidDetail[0], solidDetail[1]);
         const pos = geom.getAttribute('position');
         const norm = geom.getAttribute('normal');
         const frags = [];
-        for(let i=0; i<pos.count; i++) {
+        for(let i=0; i<pos.count; i += shardSampleStep) {
             frags.push({
                 x: pos.getX(i), y: pos.getY(i), z: pos.getZ(i),
                 nx: norm.getX(i), ny: norm.getY(i), nz: norm.getZ(i),
@@ -135,7 +137,7 @@ function MainShape() {
     return (
         <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
             <mesh ref={solidRef} scale={1.2}>
-            <torusKnotGeometry args={[1.5, 0.4, 64, 16]} />
+            <torusKnotGeometry args={[1.5, 0.4, solidDetail[0], solidDetail[1]]} />
             <MeshTransmissionMaterial 
                     backside samples={1} thickness={0.5} chromaticAberration={0.03}
                     anisotropy={0.1} distortion={0.3} distortionScale={0.5}
