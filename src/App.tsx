@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useMotionValue, useSpring, useState } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Mail, MapPin, ExternalLink, Linkedin, Youtube } from 'lucide-react';
 const ThreeBackground = lazy(() => import('./components/ThreeBackground'));
 
