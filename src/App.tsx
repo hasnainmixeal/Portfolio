@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Mail, MapPin, ExternalLink, Linkedin, Youtube } from 'lucide-react';
 const threeBackgroundPromise =
