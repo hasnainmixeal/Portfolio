@@ -187,7 +187,7 @@ export default function App() {
           <div className="group h-full min-h-[280px] md:min-h-[400px] bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)]">
             {project.image ? (
               <div className="absolute inset-0 z-0">
-                <img src={project.image} alt={project.title} loading="eager" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-100" />
+                <img src={project.image} alt={project.title} loading="lazy" fetchPriority="low" decoding="async" className="w-full h-full object-cover opacity-100" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
               </div>
             ) : (
@@ -227,7 +227,7 @@ export default function App() {
         >
           {project.image ? (
             <div className="absolute inset-0 z-0">
-              <img src={project.image} alt={project.title} loading="eager" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-100 transition-all duration-700 group-hover:opacity-40 group-hover:scale-105" />
+              <img src={project.image} alt={project.title} loading="lazy" fetchPriority="low" decoding="async" className="w-full h-full object-cover opacity-100 transition-all duration-700 group-hover:opacity-40 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </div>
           ) : (
@@ -351,7 +351,7 @@ export default function App() {
         </section>
 
         {/* About Section */}
-        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24">
+        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24" style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 900px' }}>
           <div className="flex flex-col md:flex-row gap-12 md:gap-16">
             <div className="md:w-1/3">
               <h2 className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-4">Expertise</h2>
@@ -384,7 +384,7 @@ export default function App() {
                     ].map((sw, i) => (
                       <div key={i} className="flex items-center gap-4 px-6 py-3.5 rounded-xl border border-white/10 bg-zinc-900/60 backdrop-blur-md hover:bg-zinc-800 hover:border-white/30 transition-all duration-300 shadow-lg group">
                         <div className="w-7 h-7 flex items-center justify-center shrink-0">
-                          <img src={assetUrl(sw.file)} alt={sw.name} loading="eager" fetchPriority="high" decoding="async" className="max-w-full max-h-full object-contain filter group-hover:brightness-125 transition-all" onError={(e) => { e.currentTarget.style.display='none' }} />
+                          <img src={assetUrl(sw.file)} alt={sw.name} loading="lazy" fetchPriority="low" decoding="async" className="max-w-full max-h-full object-contain filter group-hover:brightness-125 transition-all" onError={(e) => { e.currentTarget.style.display='none' }} />
                         </div>
                         <span className="font-bold tracking-wide text-white/90 text-base">{sw.name}</span>
                       </div>
@@ -397,7 +397,7 @@ export default function App() {
         </section>
 
         {/* Experience Section */}
-        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative">
+        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative" style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1100px' }}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
             <div className="md:col-span-4 sticky top-32 self-start">
               <h2 className="text-[10px] uppercase tracking-[0.2em] text-purple-400 font-bold mb-4 flex items-center gap-3">
@@ -451,7 +451,7 @@ export default function App() {
         </section>
 
         {/* Projects Section */}
-        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative">
+        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative" style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1100px' }}>
           <div className="flex flex-col mb-16">
             <h2 className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-4">Featured Work</h2>
             <h3 className="text-5xl md:text-8xl font-black tracking-tighter w-full border-b border-white/10 pb-8 uppercase text-white/90">Key Projects</h3>
@@ -512,7 +512,7 @@ export default function App() {
         </section>
 
         {/* Content Creation / YouTube Section */}
-        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative overflow-hidden">
+        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative overflow-hidden" style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 900px' }}>
           <div className="absolute inset-0 bg-gradient-to-b from-red-500/5 to-transparent pointer-events-none"></div>
           <div className="flex flex-col mb-12 relative z-10">
             <h2 className="text-sm md:text-base uppercase tracking-[0.2em] text-red-500 font-bold mb-4">Content Creation</h2>
@@ -532,7 +532,7 @@ export default function App() {
             <div className="relative z-10 max-w-3xl">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] shrink-0">
-                  <img src={assetUrl("Channel picture.jpg")} alt="Blendreall Channel" loading="eager" fetchPriority="high" decoding="async" className="w-full h-full object-cover" />
+                <img src={assetUrl("Channel picture.jpg")} alt="Blendreall Channel" loading="lazy" fetchPriority="low" decoding="async" className="w-full h-full object-cover" />
                 </div>
                 <h4 className="text-2xl md:text-4xl font-bold text-white tracking-tight">@Blendreall</h4>
               </div>
@@ -552,7 +552,7 @@ export default function App() {
         </section>
 
         {/* Footer / Contact */}
-        <footer id="contact" className="relative z-10 py-20 px-6 md:px-12 lg:px-24 border-t border-white/5 bg-black/50">
+        <footer id="contact" className="relative z-10 py-20 px-6 md:px-12 lg:px-24 border-t border-white/5 bg-black/50" style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 500px' }}>
           <div className="flex flex-col items-center flex-wrap">
             <h2 className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-12">Let's connect</h2>
             <div className="flex flex-col md:flex-row gap-8 md:gap-16 font-bold tracking-widest text-xs md:text-sm uppercase items-center">
