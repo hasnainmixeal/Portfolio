@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
-import { Float, MeshTransmissionMaterial } from '@react-three/drei';
+import { Environment, Float, MeshTransmissionMaterial } from '@react-three/drei';
 
 function Particles() {
   const count = 18;
@@ -172,6 +172,7 @@ export default function ThreeBackground() {
         
         <MainShape />
         <Particles />
+        <Environment preset="city" />
       </Canvas>
     </div>
   );

@@ -8,6 +8,9 @@ const threeBackgroundPromise =
 const ThreeBackground = lazy(() => threeBackgroundPromise ?? import('./components/ThreeBackground'));
 
 const assetUrl = (file: string) => {
+  if (file === 'profile-pic.png' || file === 'profile-pic.webp') {
+    return `${import.meta.env.BASE_URL}profile-pic.webp`;
+  }
   const optimized = file.match(/\.(png|jpe?g)$/i) ? file.replace(/\.(png|jpe?g)$/i, '.webp') : `${file}.webp`;
   return `${import.meta.env.BASE_URL}optimized/${encodeURI(optimized)}`;
 };
