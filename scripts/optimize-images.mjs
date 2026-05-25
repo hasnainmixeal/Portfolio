@@ -1,24 +1,25 @@
-import { access, rm } from 'fs/promises';
+import { access, mkdir, rm } from 'fs/promises';
 import path from 'path';
 import sharp from 'sharp';
 
 const root = path.resolve(process.cwd(), 'public');
+const outputRoot = path.join(root, 'optimized');
 
 const assets = [
-  { file: 'profile-pic.png', width: 720, quality: 84 },
-  { file: 'Channel picture.jpg', width: 320, quality: 82 },
-  { file: 'TFO thumbnail.png', width: 1200, quality: 82 },
-  { file: 'KYNETIK thumbnail.png', width: 1200, quality: 82 },
-  { file: 'GraspXR thumbnail.png', width: 900, quality: 82 },
-  { file: 'VR Villas thumbnail.png', width: 1280, quality: 82 },
-  { file: '3DS Max logo.png', width: 256, quality: 82 },
-  { file: 'Blender logo.png', width: 256, quality: 82 },
-  { file: 'Photoshoppng.png', width: 256, quality: 82 },
-  { file: 'Substance painter logo.png', width: 256, quality: 82 },
-  { file: 'Topaz Gigapixel AI logopng', width: 256, quality: 82 },
-  { file: 'Antigravitypng.png', width: 256, quality: 82 },
-  { file: 'Codex logo.png', width: 256, quality: 82 },
-  { file: 'Unreal Engine 5.png', width: 256, quality: 82 },
+  { file: 'profile-pic.png', width: 560, quality: 78 },
+  { file: 'Channel picture.jpg', width: 192, quality: 78 },
+  { file: 'TFO thumbnail.png', width: 960, quality: 78 },
+  { file: 'KYNETIK thumbnail.png', width: 960, quality: 78 },
+  { file: 'GraspXR thumbnail.png', width: 768, quality: 78 },
+  { file: 'VR Villas thumbnail.png', width: 1024, quality: 78 },
+  { file: '3DS Max logo.png', width: 128, quality: 80 },
+  { file: 'Blender logo.png', width: 128, quality: 80 },
+  { file: 'Photoshoppng.png', width: 128, quality: 80 },
+  { file: 'Substance painter logo.png', width: 128, quality: 80 },
+  { file: 'Topaz Gigapixel AI logopng', width: 128, quality: 80 },
+  { file: 'Antigravitypng.png', width: 128, quality: 80 },
+  { file: 'Codex logo.png', width: 128, quality: 80 },
+  { file: 'Unreal Engine 5.png', width: 128, quality: 80 },
 ];
 
 async function fileExists(filePath) {
@@ -30,12 +31,24 @@ async function fileExists(filePath) {
   }
 }
 
-for (const asset of assets) {
-  const sourcePath = path.join(root, asset.file);
-  const outputName = asset.file.match(/\.(png|jpe?g)$/i) ? asset.file.replace(/\.(png|jpe?g)$/i, '.webp') : `${asset.file}.webp`;
-  const outputPath = path.join(root, outputName);
+await mkdir(outputRoot, { recursive: true });
 
-  if (!(await fileExists(sourcePath))) {
+for (const asset of assets) {
+  const sourceCandidates = [
+    path.join(root, asset.file),
+    path.join(root, asset.file.match(/\.(png|jpe?g|webp)$/i) ? asset.file.replace(/\.(png|jpe?g)$/i, '.webp') : `${asset.file}.webp`),
+  ];
+  let sourcePath = null;
+  for (const candidate of sourceCandidates) {
+    if (await fileExists(candidate)) {
+      sourcePath = candidate;
+      break;
+    }
+  }
+  const outputName = asset.file.match(/\.(png|jpe?g|webp)$/i) ? asset.file.replace(/\.(png|jpe?g|webp)$/i, '.webp') : `${asset.file}.webp`;
+  const outputPath = path.join(outputRoot, outputName);
+
+  if (!sourcePath) {
     console.warn(`Skipping missing asset: ${asset.file}`);
     continue;
   }
@@ -45,7 +58,6 @@ for (const asset of assets) {
     .webp({ quality: asset.quality, effort: 6 })
     .toFile(outputPath);
 
-  await rm(sourcePath, { force: true });
   console.log(`Optimized ${asset.file} -> ${path.basename(outputPath)}`);
 }
 

@@ -1,10 +1,10 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
-import { Environment, Float, MeshTransmissionMaterial } from '@react-three/drei';
+import { Float, MeshTransmissionMaterial } from '@react-three/drei';
 
 function Particles() {
-  const count = 40;
+  const count = 18;
   const mesh = useRef<THREE.InstancedMesh>(null);
 
   const particles = useMemo(() => {
@@ -54,8 +54,8 @@ function MainShape() {
     const solidRef = useRef<THREE.Mesh>(null);
     const shardsRef = useRef<THREE.InstancedMesh>(null);
     const dummy = useMemo(() => new THREE.Object3D(), []);
-    const solidDetail: [number, number] = [128, 32];
-    const shardSampleStep = 6;
+    const solidDetail: [number, number] = [96, 24];
+    const shardSampleStep = 10;
     
     // Generate fragments based on TorusKnot geometry
     const fragments = useMemo(() => {
@@ -141,7 +141,7 @@ function MainShape() {
             <MeshTransmissionMaterial 
                     backside samples={1} thickness={0.5} chromaticAberration={0.03}
                     anisotropy={0.1} distortion={0.3} distortionScale={0.5}
-                    temporalDistortion={0.1} color="#ffffff" resolution={384}
+                    temporalDistortion={0.1} color="#ffffff" resolution={192}
                 />
             </mesh>
             <instancedMesh ref={shardsRef} args={[undefined, undefined, fragments.length]} visible={false} scale={1.2}>
@@ -149,7 +149,7 @@ function MainShape() {
                 <MeshTransmissionMaterial 
                     backside samples={1} thickness={0.5} chromaticAberration={0.05}
                     anisotropy={0.1} distortion={0.5} distortionScale={0.5}
-                    temporalDistortion={0.1} color="#ffffff" resolution={256}
+                    temporalDistortion={0.1} color="#ffffff" resolution={128}
                 />
             </instancedMesh>
         </Float>
@@ -161,7 +161,7 @@ export default function ThreeBackground() {
     <div className="fixed inset-0 z-0 opacity-50">
       <Canvas 
         camera={{ position: [0, 0, 10], fov: 40 }} 
-        dpr={[1, 1.25]}
+        dpr={[1, 1]}
         gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
         eventSource={typeof window !== 'undefined' ? document.body : undefined}
       >
@@ -172,7 +172,6 @@ export default function ThreeBackground() {
         
         <MainShape />
         <Particles />
-        <Environment preset="city" />
       </Canvas>
     </div>
   );
