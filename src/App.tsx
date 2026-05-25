@@ -1,11 +1,11 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Mail, MapPin, ExternalLink, Linkedin, Youtube } from 'lucide-react';
-const ThreeBackground = lazy(() => import('./components/ThreeBackground'));
-
-if (typeof window !== 'undefined' && !window.matchMedia('(max-width: 767px)').matches) {
-  void import('./components/ThreeBackground');
-}
+const threeBackgroundPromise =
+  typeof window !== 'undefined' && !window.matchMedia('(max-width: 767px)').matches
+    ? import('./components/ThreeBackground')
+    : null;
+const ThreeBackground = lazy(() => threeBackgroundPromise ?? import('./components/ThreeBackground'));
 
 const assetUrl = (file: string) => {
   const optimized = file.match(/\.(png|jpe?g)$/i) ? file.replace(/\.(png|jpe?g)$/i, '.webp') : `${file}.webp`;
@@ -40,11 +40,6 @@ function StaticBackdrop() {
       <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_40%)]" />
     </div>
   );
-}
-
-function preloadImage(src: string) {
-  const img = new Image();
-  img.src = src;
 }
 
 function HeroCard({interactive = true}: {interactive?: boolean}) {
@@ -161,17 +156,6 @@ export default function App() {
   const y = useTransform(scrollYProgress, [0, 0.1], [0, 100]);
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    [
-      assetUrl('profile-pic.png'),
-      assetUrl('TFO thumbnail.png'),
-      assetUrl('KYNETIK thumbnail.png'),
-      assetUrl('GraspXR thumbnail.png'),
-      assetUrl('VR Villas thumbnail.png'),
-      assetUrl('Channel picture.jpg'),
-    ].forEach(preloadImage);
-  }, []);
-
   const ProjectCard = ({ project, idx, interactive = true }: { project: any, idx: number, interactive?: boolean }) => {
     const x = useMotionValue(0);
     const yVal = useMotionValue(0);
@@ -203,7 +187,7 @@ export default function App() {
           <div className="group h-full min-h-[280px] md:min-h-[400px] bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)]">
             {project.image ? (
               <div className="absolute inset-0 z-0">
-              <img src={project.image} alt={project.title} loading="eager" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-100" />
+                <img src={project.image} alt={project.title} loading="eager" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-100" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
               </div>
             ) : (
@@ -243,7 +227,7 @@ export default function App() {
         >
           {project.image ? (
             <div className="absolute inset-0 z-0">
-              <img src={project.image} alt={project.title} loading={idx < 2 ? 'eager' : 'lazy'} fetchPriority={idx < 2 ? 'high' : 'auto'} decoding="async" className="w-full h-full object-cover opacity-100 transition-all duration-700 group-hover:opacity-40 group-hover:scale-105" />
+              <img src={project.image} alt={project.title} loading="eager" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-100 transition-all duration-700 group-hover:opacity-40 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </div>
           ) : (
