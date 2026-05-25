@@ -1,10 +1,44 @@
-import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
+import { lazy, Suspense, useEffect, useMotionValue, useSpring, useState } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Mail, MapPin, ExternalLink, Linkedin, Youtube } from 'lucide-react';
-import ThreeBackground from './components/ThreeBackground';
+const ThreeBackground = lazy(() => import('./components/ThreeBackground'));
 
-const assetUrl = (file: string) => `${import.meta.env.BASE_URL}${encodeURI(file)}`;
+const assetUrl = (file: string) => {
+  const optimized = file.match(/\.(png|jpe?g)$/i) ? file.replace(/\.(png|jpe?g)$/i, '.webp') : `${file}.webp`;
+  return `${import.meta.env.BASE_URL}${encodeURI(optimized)}`;
+};
 
-function HeroCard() {
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia(`(max-width: ${breakpoint - 1}px)`).matches;
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    const update = () => setIsMobile(mediaQuery.matches);
+
+    update();
+    mediaQuery.addEventListener('change', update);
+
+    return () => mediaQuery.removeEventListener('change', update);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
+function StaticBackdrop() {
+  return (
+    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+      <div className="absolute inset-0 bg-[#050505]" />
+      <div className="absolute top-[-10%] left-[-10%] w-[420px] h-[420px] bg-blue-600/25 rounded-full blur-[120px]" />
+      <div className="absolute top-[35%] right-[-15%] w-[520px] h-[520px] bg-purple-900/25 rounded-full blur-[140px]" />
+      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_40%)]" />
+    </div>
+  );
+}
+
+function HeroCard({interactive = true}: {interactive?: boolean}) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -34,6 +68,35 @@ function HeroCard() {
     y.set(0);
   };
 
+  if (!interactive) {
+    return (
+      <div className="relative z-20 flex justify-center items-center w-full max-w-[320px] md:max-w-[400px] lg:max-w-[500px]">
+        <div className="absolute inset-10 bg-black/50 blur-3xl rounded-full pointer-events-none" />
+        <div className="relative flex justify-center w-full">
+          <img
+            src={assetUrl('profile-pic.png')}
+            alt="Hassnain Aly"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            className="w-full h-auto max-h-[55vh] object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)] z-10 relative pointer-events-auto"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          <div className="absolute bottom-4 left-0 right-0 z-50">
+            <div className="flex flex-col items-center text-center">
+              <h3 className="text-3xl font-black tracking-tighter text-white mb-2 drop-shadow-2xl" style={{ textShadow: '0 4px 20px rgba(0,0,0,1), 0 2px 5px rgba(0,0,0,0.8)' }}>HASSNAIN ALY</h3>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#60A5FA] bg-black/80 px-4 py-2 rounded-full border border-white/20 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] font-bold">
+                3D/Unreal Engine Artist
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       onMouseMove={handleMouseMove}
@@ -56,6 +119,9 @@ function HeroCard() {
           <img 
             src={assetUrl('profile-pic.png')} 
             alt="Hassnain Aly" 
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
             className="w-full h-auto max-h-[70vh] object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)] z-10 relative pointer-events-auto" 
             style={{ transform: "translateZ(40px)" }}
             onError={(e) => { e.currentTarget.style.display='none'; }} 
@@ -84,8 +150,9 @@ export default function App() {
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
   const y = useTransform(scrollYProgress, [0, 0.1], [0, 100]);
+  const isMobile = useIsMobile();
 
-  const ProjectCard = ({ project, idx }: { project: any, idx: number }) => {
+  const ProjectCard = ({ project, idx, interactive = true }: { project: any, idx: number, interactive?: boolean }) => {
     const x = useMotionValue(0);
     const yVal = useMotionValue(0);
   
@@ -110,6 +177,42 @@ export default function App() {
       yVal.set(0);
     };
   
+    if (!interactive) {
+      return (
+        <div className="relative z-10 w-full h-full">
+          <div className="group h-full min-h-[280px] md:min-h-[400px] bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)]">
+            {project.image ? (
+              <div className="absolute inset-0 z-0">
+                <img src={project.image} alt={project.title} loading="lazy" decoding="async" className="w-full h-full object-cover opacity-100" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-white/5 to-white/10 pointer-events-none z-0"></div>
+            )}
+
+            <div className="relative z-10 h-full flex flex-col justify-end p-6 md:p-10">
+              <div className="mb-4">
+                <h3 className="text-2xl md:text-3xl font-black tracking-tight text-white/95">{project.title}</h3>
+              </div>
+              <p className="text-sm md:text-base text-white/75 leading-relaxed max-w-[95%] mb-6">
+                {project.desc}
+              </p>
+              {project.actions && (
+                <div className="flex flex-wrap gap-3 pt-2">
+                  {project.actions.map((action: any, aIdx: number) => (
+                    <a key={aIdx} href={action.url} target="_blank" rel="noreferrer" className="pointer-events-auto flex items-center justify-center gap-2 relative z-20 px-5 py-3 bg-zinc-900/90 text-white rounded-xl font-bold text-[10px] md:text-xs uppercase tracking-widest border border-white/20 transition-all duration-300 shadow-xl">
+                      {action.label}
+                      <ExternalLink size={14} className="opacity-70" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div style={{ perspective: 1200 }} className="relative z-10 w-full h-full">
         <motion.div
@@ -120,7 +223,7 @@ export default function App() {
         >
           {project.image ? (
             <div className="absolute inset-0 z-0">
-              <img src={project.image} alt={project.title} className="w-full h-full object-cover opacity-100 transition-all duration-700 group-hover:opacity-40 group-hover:scale-105" />
+              <img src={project.image} alt={project.title} loading="lazy" decoding="async" className="w-full h-full object-cover opacity-100 transition-all duration-700 group-hover:opacity-40 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </div>
           ) : (
@@ -155,12 +258,11 @@ export default function App() {
   return (
     <div className="relative min-h-screen bg-[#050505] text-[#F5F5F5] font-sans flex flex-col overflow-hidden selection:bg-white/20">
       
-      <div className="fixed inset-0 opacity-20 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600 rounded-full blur-[160px]"></div>
-        <div className="absolute top-[40%] right-[-10%] w-[600px] h-[600px] bg-purple-900 rounded-full blur-[180px]"></div>
-      </div>
-
-      <ThreeBackground />
+      {isMobile ? <StaticBackdrop /> : (
+        <Suspense fallback={<StaticBackdrop />}>
+          <ThreeBackground />
+        </Suspense>
+      )}
       
       {/* Navigation Overlay */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-24 px-6 md:px-12 lg:px-24 flex justify-end items-center mix-blend-difference pointer-events-none">
@@ -231,7 +333,7 @@ export default function App() {
           </div>
           
           <div className="w-full md:w-1/2 h-[450px] md:h-[600px] mt-16 md:mt-0 relative z-10 flex items-center justify-center">
-            <HeroCard />
+            <HeroCard interactive={!isMobile} />
           </div>
 
           <motion.div 
@@ -245,7 +347,7 @@ export default function App() {
         </section>
 
         {/* About Section */}
-        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24">
+        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 [content-visibility:auto] [contain-intrinsic-size:1px_900px]">
           <div className="flex flex-col md:flex-row gap-12 md:gap-16">
             <div className="md:w-1/3">
               <h2 className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-4">Expertise</h2>
@@ -278,7 +380,7 @@ export default function App() {
                     ].map((sw, i) => (
                       <div key={i} className="flex items-center gap-4 px-6 py-3.5 rounded-xl border border-white/10 bg-zinc-900/60 backdrop-blur-md hover:bg-zinc-800 hover:border-white/30 transition-all duration-300 shadow-lg group">
                         <div className="w-7 h-7 flex items-center justify-center shrink-0">
-                          <img src={assetUrl(sw.file)} alt={sw.name} className="max-w-full max-h-full object-contain filter group-hover:brightness-125 transition-all" onError={(e) => { e.currentTarget.style.display='none' }} />
+                          <img src={assetUrl(sw.file)} alt={sw.name} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain filter group-hover:brightness-125 transition-all" onError={(e) => { e.currentTarget.style.display='none' }} />
                         </div>
                         <span className="font-bold tracking-wide text-white/90 text-base">{sw.name}</span>
                       </div>
@@ -291,7 +393,7 @@ export default function App() {
         </section>
 
         {/* Experience Section */}
-        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative">
+        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative [content-visibility:auto] [contain-intrinsic-size:1px_1100px]">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
             <div className="md:col-span-4 sticky top-32 self-start">
               <h2 className="text-[10px] uppercase tracking-[0.2em] text-purple-400 font-bold mb-4 flex items-center gap-3">
@@ -345,7 +447,7 @@ export default function App() {
         </section>
 
         {/* Projects Section */}
-        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative">
+        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative [content-visibility:auto] [contain-intrinsic-size:1px_1400px]">
           <div className="flex flex-col mb-16">
             <h2 className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-4">Featured Work</h2>
             <h3 className="text-5xl md:text-8xl font-black tracking-tighter w-full border-b border-white/10 pb-8 uppercase text-white/90">Key Projects</h3>
@@ -386,7 +488,7 @@ export default function App() {
                 image: assetUrl("VR Villas thumbnail.png")
               }
             ].map((project, idx) => (
-              <ProjectCard key={idx} project={project} idx={idx} />
+              <ProjectCard key={idx} project={project} idx={idx} interactive={!isMobile} />
             ))}
 
           </div>
@@ -406,7 +508,7 @@ export default function App() {
         </section>
 
         {/* Content Creation / YouTube Section */}
-        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative overflow-hidden">
+        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative overflow-hidden [content-visibility:auto] [contain-intrinsic-size:1px_900px]">
           <div className="absolute inset-0 bg-gradient-to-b from-red-500/5 to-transparent pointer-events-none"></div>
           <div className="flex flex-col mb-12 relative z-10">
             <h2 className="text-sm md:text-base uppercase tracking-[0.2em] text-red-500 font-bold mb-4">Content Creation</h2>
@@ -426,7 +528,7 @@ export default function App() {
             <div className="relative z-10 max-w-3xl">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] shrink-0">
-                  <img src={assetUrl("Channel picture.jpg")} alt="Blendreall Channel" className="w-full h-full object-cover" />
+                  <img src={assetUrl("Channel picture.jpg")} alt="Blendreall Channel" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
                 <h4 className="text-2xl md:text-4xl font-bold text-white tracking-tight">@Blendreall</h4>
               </div>
@@ -446,7 +548,7 @@ export default function App() {
         </section>
 
         {/* Footer / Contact */}
-        <footer id="contact" className="relative z-10 py-20 px-6 md:px-12 lg:px-24 border-t border-white/5 bg-black/50">
+        <footer id="contact" className="relative z-10 py-20 px-6 md:px-12 lg:px-24 border-t border-white/5 bg-black/50 [content-visibility:auto] [contain-intrinsic-size:1px_400px]">
           <div className="flex flex-col items-center flex-wrap">
             <h2 className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-12">Let's connect</h2>
             <div className="flex flex-col md:flex-row gap-8 md:gap-16 font-bold tracking-widest text-xs md:text-sm uppercase items-center">

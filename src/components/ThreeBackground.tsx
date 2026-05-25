@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { Environment, Float, MeshTransmissionMaterial } from '@react-three/drei';
 
 function Particles() {
-  const count = 200;
+  const count = 72;
   const mesh = useRef<THREE.InstancedMesh>(null);
 
   const particles = useMemo(() => {
@@ -44,7 +44,7 @@ function Particles() {
 
   return (
     <instancedMesh ref={mesh} args={[undefined, undefined, count]}>
-      <sphereGeometry args={[0.03, 8, 8]} />
+      <sphereGeometry args={[0.03, 6, 6]} />
       <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
     </instancedMesh>
   );
@@ -57,7 +57,7 @@ function MainShape() {
     
     // Generate fragments based on TorusKnot geometry
     const fragments = useMemo(() => {
-        const geom = new THREE.TorusKnotGeometry(1.5, 0.4, 64, 16);
+        const geom = new THREE.TorusKnotGeometry(1.5, 0.4, 48, 12);
         const pos = geom.getAttribute('position');
         const norm = geom.getAttribute('normal');
         const frags = [];
@@ -135,19 +135,19 @@ function MainShape() {
     return (
         <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
             <mesh ref={solidRef} scale={1.2}>
-                <torusKnotGeometry args={[1.5, 0.4, 128, 64]} />
-                <MeshTransmissionMaterial 
-                    backside samples={4} thickness={0.5} chromaticAberration={0.03}
+            <torusKnotGeometry args={[1.5, 0.4, 96, 32]} />
+            <MeshTransmissionMaterial 
+                    backside samples={2} thickness={0.5} chromaticAberration={0.03}
                     anisotropy={0.1} distortion={0.3} distortionScale={0.5}
-                    temporalDistortion={0.1} color="#ffffff" resolution={1024}
+                    temporalDistortion={0.1} color="#ffffff" resolution={512}
                 />
             </mesh>
             <instancedMesh ref={shardsRef} args={[undefined, undefined, fragments.length]} visible={false} scale={1.2}>
                 <tetrahedronGeometry args={[0.08, 0]} />
                 <MeshTransmissionMaterial 
-                    backside samples={4} thickness={0.5} chromaticAberration={0.05}
+                    backside samples={2} thickness={0.5} chromaticAberration={0.05}
                     anisotropy={0.1} distortion={0.5} distortionScale={0.5}
-                    temporalDistortion={0.1} color="#ffffff" resolution={512}
+                    temporalDistortion={0.1} color="#ffffff" resolution={256}
                 />
             </instancedMesh>
         </Float>
@@ -159,7 +159,8 @@ export default function ThreeBackground() {
     <div className="fixed inset-0 z-0 opacity-50">
       <Canvas 
         camera={{ position: [0, 0, 10], fov: 40 }} 
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
+        gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
         eventSource={typeof window !== 'undefined' ? document.body : undefined}
       >
         <fog attach="fog" args={['#050505', 8, 25]} />
