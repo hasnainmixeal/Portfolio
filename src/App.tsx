@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion';
-import { Mail, MapPin, ExternalLink, Linkedin, Youtube } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Linkedin, Mail, MapPin, X, Youtube } from 'lucide-react';
 import ThreeBackground from './components/ThreeBackground';
 
 const assetUrl = (file: string) => {
@@ -10,6 +10,15 @@ const assetUrl = (file: string) => {
   const optimized = file.match(/\.(png|jpe?g)$/i) ? file.replace(/\.(png|jpe?g)$/i, '.webp') : `${file}.webp`;
   return `${import.meta.env.BASE_URL}optimized/${encodeURI(optimized)}`;
 };
+
+const carouselImages = Array.from({ length: 37 }, (_, index) => {
+  const id = index + 1;
+  return {
+    id,
+    thumb: `${import.meta.env.BASE_URL}carousel/thumbs/${id}.webp`,
+    full: `${import.meta.env.BASE_URL}carousel/full/${id}.webp`,
+  };
+});
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(() => {
@@ -38,6 +47,187 @@ function StaticBackdrop() {
       <div className="absolute top-[35%] right-[-15%] w-[520px] h-[520px] bg-purple-900/25 rounded-full blur-[140px]" />
       <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_40%)]" />
     </div>
+  );
+}
+
+function WorkCarousel() {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<number | null>(null);
+  const resumeTimerRef = useRef<number | null>(null);
+  const isDraggingRef = useRef(false);
+  const isPausedRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollRef = useRef(0);
+  const dragDistanceRef = useRef(0);
+  const [activeImage, setActiveImage] = useState<(typeof carouselImages)[number] | null>(null);
+  const loopImages = [...carouselImages, ...carouselImages];
+
+  const normalizeScroll = () => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const halfWidth = track.scrollWidth / 2;
+    if (track.scrollLeft >= halfWidth) {
+      track.scrollLeft -= halfWidth;
+    } else if (track.scrollLeft < 0) {
+      track.scrollLeft += halfWidth;
+    }
+  };
+
+  const pauseBriefly = (duration = 650) => {
+    isPausedRef.current = true;
+    if (resumeTimerRef.current) {
+      window.clearTimeout(resumeTimerRef.current);
+    }
+    resumeTimerRef.current = window.setTimeout(() => {
+      isPausedRef.current = false;
+    }, duration);
+  };
+
+  const cardStep = () => {
+    const firstCard = trackRef.current?.querySelector<HTMLElement>('[data-carousel-card]');
+    return firstCard ? firstCard.offsetWidth + 24 : 360;
+  };
+
+  useEffect(() => {
+    const animate = () => {
+      const track = trackRef.current;
+      if (track && !isPausedRef.current && !isDraggingRef.current) {
+        track.scrollLeft += 0.55;
+        normalizeScroll();
+      }
+      frameRef.current = window.requestAnimationFrame(animate);
+    };
+
+    frameRef.current = window.requestAnimationFrame(animate);
+
+    return () => {
+      if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
+      if (resumeTimerRef.current) window.clearTimeout(resumeTimerRef.current);
+    };
+  }, []);
+
+  const slide = (direction: 1 | -1) => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    pauseBriefly(520);
+    track.scrollBy({ left: direction * cardStep(), behavior: 'smooth' });
+    window.setTimeout(normalizeScroll, 560);
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    isDraggingRef.current = true;
+    isPausedRef.current = true;
+    dragDistanceRef.current = 0;
+    dragStartXRef.current = event.clientX;
+    dragStartScrollRef.current = track.scrollLeft;
+    track.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const track = trackRef.current;
+    if (!track || !isDraggingRef.current) return;
+
+    const delta = event.clientX - dragStartXRef.current;
+    dragDistanceRef.current = Math.max(dragDistanceRef.current, Math.abs(delta));
+    track.scrollLeft = dragStartScrollRef.current - delta;
+    normalizeScroll();
+  };
+
+  const endDrag = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    pauseBriefly(450);
+  };
+
+  return (
+    <section className="py-20 md:py-24 border-t border-white/5 relative overflow-hidden">
+      <div className="px-6 md:px-12 lg:px-24 mb-10">
+        <h2 className="text-[10px] uppercase tracking-[0.2em] text-cyan-300 font-bold mb-4">Visual Archive</h2>
+        <h3 className="text-5xl md:text-8xl font-black tracking-tighter uppercase text-white/90 border-b border-white/10 pb-8">Selected Frames</h3>
+      </div>
+
+      <div className="relative">
+        <button
+          type="button"
+          aria-label="Previous carousel image"
+          onClick={() => slide(-1)}
+          className="absolute left-4 md:left-10 top-1/2 z-20 -translate-y-1/2 grid h-12 w-12 place-items-center rounded-full border border-white/20 bg-black/70 text-white shadow-2xl backdrop-blur-md transition hover:border-white/50 hover:bg-white hover:text-black"
+        >
+          <ChevronLeft size={24} />
+        </button>
+
+        <div
+          ref={trackRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={endDrag}
+          onPointerLeave={endDrag}
+          className="flex gap-6 overflow-x-scroll px-6 md:px-12 lg:px-24 py-6 select-none cursor-grab [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {loopImages.map((image, index) => (
+            <button
+              data-carousel-card
+              type="button"
+              key={`${image.id}-${index}`}
+              onClick={() => {
+                if (dragDistanceRef.current < 8) setActiveImage(image);
+              }}
+              className="group relative h-[230px] w-[78vw] max-w-[520px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-[0_24px_70px_rgba(0,0,0,0.45)] transition duration-300 hover:-translate-y-1 hover:border-white/35 md:h-[310px] md:w-[520px]"
+            >
+              <img
+                src={image.thumb}
+                alt={`Portfolio render ${image.id}`}
+                loading={image.id <= 6 ? 'eager' : 'lazy'}
+                fetchPriority={image.id <= 6 ? 'high' : 'auto'}
+                decoding="async"
+                draggable={false}
+                className="h-full w-full object-contain bg-black transition duration-500 group-hover:scale-[1.03]"
+              />
+              <span className="absolute bottom-4 left-4 rounded-full border border-white/15 bg-black/70 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/75 backdrop-blur">
+                Frame {String(image.id).padStart(2, '0')}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          aria-label="Next carousel image"
+          onClick={() => slide(1)}
+          className="absolute right-4 md:right-10 top-1/2 z-20 -translate-y-1/2 grid h-12 w-12 place-items-center rounded-full border border-white/20 bg-black/70 text-white shadow-2xl backdrop-blur-md transition hover:border-white/50 hover:bg-white hover:text-black"
+        >
+          <ChevronRight size={24} />
+        </button>
+      </div>
+
+      <p className="px-6 md:px-12 lg:px-24 mt-4 text-center text-xs font-mono uppercase tracking-[0.18em] text-white/45">
+        Click and drag the reel to move through the work.
+      </p>
+
+      {activeImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-xl" onClick={() => setActiveImage(null)}>
+          <button
+            type="button"
+            aria-label="Close full image"
+            onClick={() => setActiveImage(null)}
+            className="absolute right-5 top-5 grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition hover:bg-white hover:text-black"
+          >
+            <X size={22} />
+          </button>
+          <img
+            src={activeImage.full}
+            alt={`Full portfolio render ${activeImage.id}`}
+            className="max-h-[90vh] max-w-[94vw] rounded-xl object-contain shadow-[0_30px_120px_rgba(0,0,0,0.8)]"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -505,6 +695,8 @@ export default function App() {
              </a>
           </div>
         </section>
+
+        <WorkCarousel />
 
         {/* Content Creation / YouTube Section */}
         <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative overflow-hidden">
