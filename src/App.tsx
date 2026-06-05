@@ -52,8 +52,10 @@ function StaticBackdrop() {
 
 function WorkCarousel() {
   const trackRef = useRef<HTMLDivElement>(null);
+  const dragLineRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number | null>(null);
   const resumeTimerRef = useRef<number | null>(null);
+  const normalizeTimerRef = useRef<number | null>(null);
   const isDraggingRef = useRef(false);
   const isPausedRef = useRef(false);
   const dragStartXRef = useRef(0);
@@ -61,6 +63,9 @@ function WorkCarousel() {
   const dragDistanceRef = useRef(0);
   const [activeImage, setActiveImage] = useState<(typeof carouselImages)[number] | null>(null);
   const loopImages = [...carouselImages, ...carouselImages];
+
+  // Performance-optimized scroll progress tracking using Framer Motion
+  const progressX = useMotionValue(0);
 
   const normalizeScroll = () => {
     const track = trackRef.current;
@@ -104,16 +109,53 @@ function WorkCarousel() {
     return () => {
       if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
       if (resumeTimerRef.current) window.clearTimeout(resumeTimerRef.current);
+      if (normalizeTimerRef.current) window.clearTimeout(normalizeTimerRef.current);
     };
   }, []);
+
+  // Sync scroll progress indicator reactively without triggering React component re-renders
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const handleScroll = () => {
+      const halfWidth = track.scrollWidth / 2;
+      if (halfWidth > 0) {
+        const progress = (track.scrollLeft % halfWidth) / halfWidth;
+        progressX.set(progress);
+      }
+    };
+
+    track.addEventListener('scroll', handleScroll);
+    return () => {
+      track.removeEventListener('scroll', handleScroll);
+    };
+  }, [progressX]);
 
   const slide = (direction: 1 | -1) => {
     const track = trackRef.current;
     if (!track) return;
 
-    pauseBriefly(520);
-    track.scrollBy({ left: direction * cardStep(), behavior: 'smooth' });
-    window.setTimeout(normalizeScroll, 560);
+    pauseBriefly(650);
+
+    const halfWidth = track.scrollWidth / 2;
+    const step = cardStep();
+
+    // Instantly wrap scroll position when near boundaries to avoid clamping during smooth scroll
+    if (direction === -1 && track.scrollLeft <= step) {
+      track.scrollLeft += halfWidth;
+    } else if (direction === 1 && track.scrollLeft >= halfWidth - step) {
+      track.scrollLeft -= halfWidth;
+    }
+
+    track.scrollBy({ left: direction * step, behavior: 'smooth' });
+
+    if (normalizeTimerRef.current) {
+      window.clearTimeout(normalizeTimerRef.current);
+    }
+    normalizeTimerRef.current = window.setTimeout(() => {
+      normalizeScroll();
+    }, 600);
   };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -125,30 +167,63 @@ function WorkCarousel() {
     dragDistanceRef.current = 0;
     dragStartXRef.current = event.clientX;
     dragStartScrollRef.current = track.scrollLeft;
-    track.setPointerCapture(event.pointerId);
+
+    const handlePointerMoveWindow = (moveEvent: PointerEvent) => {
+      if (!isDraggingRef.current) return;
+      const delta = moveEvent.clientX - dragStartXRef.current;
+      dragDistanceRef.current = Math.max(dragDistanceRef.current, Math.abs(delta));
+      track.scrollLeft = dragStartScrollRef.current - delta;
+      normalizeScroll();
+    };
+
+    const handlePointerUpWindow = () => {
+      isDraggingRef.current = false;
+      window.removeEventListener('pointermove', handlePointerMoveWindow);
+      window.removeEventListener('pointerup', handlePointerUpWindow);
+      pauseBriefly(450);
+    };
+
+    window.addEventListener('pointermove', handlePointerMoveWindow);
+    window.addEventListener('pointerup', handlePointerUpWindow);
   };
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  // Drag handler for the horizontal scroll line under the carousel
+  const handleLinePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const line = dragLineRef.current;
     const track = trackRef.current;
-    if (!track || !isDraggingRef.current) return;
+    if (!line || !track) return;
 
-    const delta = event.clientX - dragStartXRef.current;
-    dragDistanceRef.current = Math.max(dragDistanceRef.current, Math.abs(delta));
-    track.scrollLeft = dragStartScrollRef.current - delta;
-    normalizeScroll();
-  };
+    isPausedRef.current = true;
+    if (resumeTimerRef.current) window.clearTimeout(resumeTimerRef.current);
 
-  const endDrag = () => {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
-    pauseBriefly(450);
+    const updateScrollFromEvent = (clientX: number) => {
+      const rect = line.getBoundingClientRect();
+      const progress = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const halfWidth = track.scrollWidth / 2;
+      track.scrollLeft = progress * halfWidth;
+    };
+
+    updateScrollFromEvent(event.clientX);
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      updateScrollFromEvent(moveEvent.clientX);
+    };
+
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      pauseBriefly(650);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
   };
 
   return (
     <section className="py-20 md:py-24 border-t border-white/5 relative overflow-hidden">
       <div className="px-6 md:px-12 lg:px-24 mb-10">
-        <h2 className="text-[10px] uppercase tracking-[0.2em] text-cyan-300 font-bold mb-4">Visual Archive</h2>
-        <h3 className="text-5xl md:text-8xl font-black tracking-tighter uppercase text-white/90 border-b border-white/10 pb-8">Selected Frames</h3>
+        <h2 className="text-[10px] uppercase tracking-[0.2em] text-cyan-300 font-bold mb-4">Visual Gallery</h2>
+        <h3 className="text-5xl md:text-8xl font-black tracking-tighter uppercase text-white/90 border-b border-white/10 pb-8">Portfolio Reel</h3>
       </div>
 
       <div className="relative">
@@ -164,9 +239,6 @@ function WorkCarousel() {
         <div
           ref={trackRef}
           onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={endDrag}
-          onPointerLeave={endDrag}
           className="flex gap-6 overflow-x-scroll px-6 md:px-12 lg:px-24 py-6 select-none cursor-grab [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {loopImages.map((image, index) => (
@@ -188,9 +260,6 @@ function WorkCarousel() {
                 draggable={false}
                 className="h-full w-full object-contain bg-black transition duration-500 group-hover:scale-[1.03]"
               />
-              <span className="absolute bottom-4 left-4 rounded-full border border-white/15 bg-black/70 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/75 backdrop-blur">
-                Frame {String(image.id).padStart(2, '0')}
-              </span>
             </button>
           ))}
         </div>
@@ -205,9 +274,30 @@ function WorkCarousel() {
         </button>
       </div>
 
-      <p className="px-6 md:px-12 lg:px-24 mt-4 text-center text-xs font-mono uppercase tracking-[0.18em] text-white/45">
-        Click and drag the reel to move through the work.
-      </p>
+      <div className="flex flex-col items-center gap-6 mt-8">
+        {/* Interactive scrollbar/drag line requested by user */}
+        <div 
+          className="relative flex items-center justify-center py-4 cursor-pointer select-none group/track" 
+          onPointerDown={handleLinePointerDown}
+        >
+          <div
+            ref={dragLineRef}
+            className="w-64 h-1 bg-white/10 group-hover/track:bg-white/25 rounded-full relative overflow-visible transition-colors duration-300"
+          >
+            <motion.div
+              className="absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 bg-cyan-400 rounded-full shadow-[0_0_10px_#22d3ee] active:scale-125 cursor-grab active:cursor-grabbing"
+              style={{
+                left: useTransform(progressX, (x) => `${x * 100}%`),
+                transform: 'translate(-50%, -50%)',
+              }}
+            />
+          </div>
+        </div>
+
+        <p className="px-6 md:px-12 lg:px-24 text-center text-xs font-mono uppercase tracking-[0.18em] text-white/45">
+          Drag the line or the reel to explore the work.
+        </p>
+      </div>
 
       {activeImage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-xl" onClick={() => setActiveImage(null)}>
