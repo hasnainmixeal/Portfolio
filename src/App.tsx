@@ -223,7 +223,7 @@ function WorkCarousel() {
     <section className="py-20 md:py-24 border-t border-white/5 relative overflow-hidden">
       <div className="px-6 md:px-12 lg:px-24 mb-10">
         <h2 className="text-[10px] uppercase tracking-[0.2em] text-cyan-300 font-bold mb-4">Visual Gallery</h2>
-        <h3 className="text-5xl md:text-8xl font-black tracking-tighter uppercase text-white/90 border-b border-white/10 pb-8">Portfolio Reel</h3>
+        <h3 className="text-5xl md:text-8xl font-black tracking-tighter uppercase text-white/90 border-b border-white/10 pb-8">Selected Work</h3>
       </div>
 
       <div className="relative">
