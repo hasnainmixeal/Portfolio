@@ -1,179 +1,108 @@
-import { Canvas, useFrame } from '@react-three/fiber';
-import { useRef, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { Environment, Float, MeshTransmissionMaterial } from '@react-three/drei';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
-function Particles() {
-  const count = 18;
-  const mesh = useRef<THREE.InstancedMesh>(null);
-
-  const particles = useMemo(() => {
-    const temp = [];
-    for (let i = 0; i < count; i++) {
-        const time = Math.random() * 100;
-        const factor = Math.random() * 2 + 1.5;
-        const speed = Math.random() * 0.01 + 0.005;
-        const x = Math.random() * 30 - 15;
-        const y = Math.random() * 30 - 15;
-        const z = Math.random() * 20 - 10;
-        temp.push({ time, factor, speed, x, y, z });
-    }
-    return temp;
-  }, [count]);
-
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-
-  useFrame(() => {
-    particles.forEach((particle, i) => {
-      let { factor, speed, x, y, z } = particle;
-      const t = (particle.time += speed / 2);
-      dummy.position.set(
-        x + Math.cos((t / 10) * factor) + (Math.sin(t * 1) * factor) / 10,
-        y + Math.sin((t / 10) * factor) + (Math.cos(t * 2) * factor) / 10,
-        z + Math.cos((t / 10) * factor) + (Math.sin(t * 3) * factor) / 10
-      );
-      dummy.updateMatrix();
-      if (mesh.current) {
-        mesh.current.setMatrixAt(i, dummy.matrix);
-      }
-    });
-    if (mesh.current) {
-      mesh.current.instanceMatrix.needsUpdate = true;
-    }
-  });
-
-  return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, count]}>
-      <sphereGeometry args={[0.03, 5, 5]} />
-      <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
-    </instancedMesh>
-  );
-}
-
-function MainShape() {
-    const solidRef = useRef<THREE.Mesh>(null);
-    const shardsRef = useRef<THREE.InstancedMesh>(null);
-    const dummy = useMemo(() => new THREE.Object3D(), []);
-    const solidDetail: [number, number] = [96, 24];
-    const shardSampleStep = 10;
-    
-    // Generate fragments based on TorusKnot geometry
-    const fragments = useMemo(() => {
-        const geom = new THREE.TorusKnotGeometry(1.5, 0.4, solidDetail[0], solidDetail[1]);
-        const pos = geom.getAttribute('position');
-        const norm = geom.getAttribute('normal');
-        const frags = [];
-        for(let i=0; i<pos.count; i += shardSampleStep) {
-            frags.push({
-                x: pos.getX(i), y: pos.getY(i), z: pos.getZ(i),
-                nx: norm.getX(i), ny: norm.getY(i), nz: norm.getZ(i),
-                random: Math.random(),
-                rx: Math.random() * Math.PI, ry: Math.random() * Math.PI, rz: Math.random() * Math.PI
-            });
-        }
-        return frags;
-    }, []);
-
-    useFrame((state) => {
-        const scrollY = window.scrollY || 0;
-        const scrollPct = Math.min(Math.max(scrollY / 1500, 0), 1);
-        const baseRotX = Math.sin(state.clock.elapsedTime * 0.2) * 0.2;
-        const baseRotY = state.clock.elapsedTime * 0.2;
-
-        if (solidRef.current) {
-            solidRef.current.rotation.x = baseRotX;
-            solidRef.current.rotation.y = baseRotY;
-            const mat = solidRef.current.material as THREE.MeshPhysicalMaterial;
-            mat.transparent = true;
-            mat.opacity = Math.max(0, 1 - scrollPct * 2.5); // Fade out over first 40%
-            solidRef.current.visible = scrollPct < 0.4;
-        }
-
-        if (shardsRef.current) {
-            shardsRef.current.rotation.x = baseRotX;
-            shardsRef.current.rotation.y = baseRotY;
-            shardsRef.current.visible = scrollPct > 0;
-
-            if (scrollPct > 0) {
-                fragments.forEach((frag, i) => {
-                    // Gradual shatter movement
-                    const explosionProgress = Math.max(0, scrollPct - 0.1); 
-                    const explodeEase = Math.pow(explosionProgress, 1.5);
-                    
-                    const explodeDist = explodeEase * 30 * (frag.random + 0.2);
-                    const lift = explodeEase * 15;
-
-                    dummy.position.set(
-                        frag.x + frag.nx * explodeDist,
-                        frag.y + frag.ny * explodeDist + lift,
-                        frag.z + frag.nz * explodeDist
-                    );
-                    
-                    const rotSpeed = explodeEase * state.clock.elapsedTime * frag.random * 3;
-                    dummy.rotation.set(
-                        frag.rx + rotSpeed,
-                        frag.ry + rotSpeed,
-                        frag.rz + rotSpeed
-                    );
-                    
-                    let scale = 0;
-                    if (scrollPct < 0.4) {
-                        scale = (scrollPct / 0.4); 
-                    } else {
-                        // Slowly scale down between 0.4 and 1.0 (length 0.6)
-                        const fadePct = (scrollPct - 0.4) / 0.6;
-                        scale = Math.max(0, 1 - Math.pow(fadePct, 2));
-                    }
-                    
-                    dummy.scale.set(scale, scale, scale);
-                    dummy.updateMatrix();
-                    shardsRef.current!.setMatrixAt(i, dummy.matrix);
-                });
-                shardsRef.current.instanceMatrix.needsUpdate = true;
-            }
-        }
-    });
-
-    return (
-        <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
-            <mesh ref={solidRef} scale={1.2}>
-            <torusKnotGeometry args={[1.5, 0.4, solidDetail[0], solidDetail[1]]} />
-            <MeshTransmissionMaterial 
-                    backside samples={1} thickness={0.5} chromaticAberration={0.03}
-                    anisotropy={0.1} distortion={0.3} distortionScale={0.5}
-                    temporalDistortion={0.1} color="#ffffff" resolution={192}
-                />
-            </mesh>
-            <instancedMesh ref={shardsRef} args={[undefined, undefined, fragments.length]} visible={false} scale={1.2}>
-                <tetrahedronGeometry args={[0.08, 0]} />
-                <MeshTransmissionMaterial 
-                    backside samples={1} thickness={0.5} chromaticAberration={0.05}
-                    anisotropy={0.1} distortion={0.5} distortionScale={0.5}
-                    temporalDistortion={0.1} color="#ffffff" resolution={128}
-                />
-            </instancedMesh>
-        </Float>
-    )
-}
-
+// A single, locally lit scene. No models, HDR downloads, refraction passes or render framework.
 export default function ThreeBackground() {
-  return (
-    <div className="fixed inset-0 z-0 opacity-50">
-      <Canvas 
-        camera={{ position: [0, 0, 10], fov: 40 }} 
-        dpr={[1, 1]}
-        gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
-        eventSource={typeof window !== 'undefined' ? document.body : undefined}
-      >
-        <fog attach="fog" args={['#050505', 8, 25]} />
-        <ambientLight intensity={0.5} />
-        <spotLight position={[10, 10, 10]} intensity={3} angle={0.15} penumbra={1} color="#ffffff" />
-        <spotLight position={[-10, -10, -10]} intensity={5} angle={0.15} penumbra={1} color="#555555" />
-        
-        <MainShape />
-        <Particles />
-        <Environment preset="city" />
-      </Canvas>
-    </div>
-  );
+  const host = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!host.current) return;
+    let renderer: THREE.WebGLRenderer;
+    try { renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' }); }
+    catch { return; }
+    const container = host.current;
+    container.appendChild(renderer.domElement);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 60);
+    camera.position.z = 12;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const room = new RoomEnvironment();
+    const environment = pmrem.fromScene(room, 0.04);
+    scene.environment = environment.texture;
+    room.dispose(); pmrem.dispose();
+    scene.add(new THREE.HemisphereLight(0xbceaff, 0x18102f, 1.4));
+    const light = new THREE.PointLight(0x48cfff, 25); light.position.set(3, 4, 5); scene.add(light);
+    const root = new THREE.Group(); scene.add(root);
+    const glass = new THREE.MeshPhysicalMaterial({ color: 0x8dd7ff, metalness: 0.8, roughness: 0.12, clearcoat: 1, transparent: true, opacity: 0.6 });
+    const metal = new THREE.MeshStandardMaterial({ color: 0x8ca5bd, metalness: 1, roughness: 0.25 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x142331, metalness: 0.85, roughness: 0.3 });
+    const glow = new THREE.MeshStandardMaterial({ color: 0x83eeff, emissive: 0x1eaaff, emissiveIntensity: 0.7, roughness: 0.22, metalness: 0.5 });
+    const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(1.65, 0.32, 100, 12), glass); root.add(knot);
+    const shardGeometry = new THREE.TetrahedronGeometry(0.1);
+    const shards = new THREE.InstancedMesh(shardGeometry, glass, 120); root.add(shards);
+    const dummy = new THREE.Object3D();
+    const vertices = knot.geometry.getAttribute('position');
+    const fragmentPositions = Array.from({ length: 120 }, (_, i) => new THREE.Vector3().fromBufferAttribute(vertices, Math.floor(i * vertices.count / 120)));
+    const assembly = new THREE.Group(); root.add(assembly);
+    const parts: { mesh: THREE.Mesh; y: number; spread: number }[] = [];
+    const add = (geometry: THREE.BufferGeometry, material: THREE.Material, y: number, spread: number) => {
+      const mesh = new THREE.Mesh(geometry, material); assembly.add(mesh); parts.push({ mesh, y, spread }); return mesh;
+    };
+    add(new THREE.IcosahedronGeometry(0.72, 1), glow, 0, 0);
+    for (let i = 0; i < 6; i++) {
+      const y = (i - 2.5) * 0.27;
+      const ring = add(new THREE.TorusGeometry(i === 0 || i === 5 ? 1.04 : 1.35, 0.09, 8, 64), i % 2 ? metal : glass, y, (i - 2.5) * 0.65);
+      ring.rotation.x = Math.PI / 2;
+    }
+    for (const side of [-1, 1]) {
+      add(new THREE.CylinderGeometry(0.95, 0.95, 0.18, 48), dark, side * 0.94, side * 2.1);
+      const rim = add(new THREE.TorusGeometry(0.8, 0.025, 6, 48), glow, side * 1.04, side * 2.1); rim.rotation.x = Math.PI / 2;
+      for (let i = 0; i < 8; i++) {
+        const fin = add(new THREE.BoxGeometry(0.14, 0.65, 0.26), metal, side * 0.5, side * 1.2);
+        const a = i / 8 * Math.PI * 2; fin.position.x = Math.cos(a) * 1.13; fin.position.z = Math.sin(a) * 1.13; fin.rotation.y = -a;
+      }
+    }
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let frame = 0, previous = 0, disposed = false;
+    const pointer = { x: 0, y: 0 };
+    const move = (event: PointerEvent) => { pointer.x = event.clientX / innerWidth - 0.5; pointer.y = event.clientY / innerHeight - 0.5; };
+    const resize = () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); };
+    resize();
+    const render = (time: number) => {
+      if (disposed) return;
+      frame = requestAnimationFrame(render);
+      if (time - previous < (reduced.matches ? 100 : 33)) return;
+      previous = time;
+      const section = document.getElementById('inside-the-form');
+      const rect = section?.getBoundingClientRect();
+      const inLab = !!rect && rect.top < innerHeight * 0.65 && rect.bottom > 0;
+      const inHero = window.scrollY < innerHeight * 1.2;
+      if (!inLab && !inHero) { container.style.opacity = '0'; return; }
+      container.style.opacity = inLab ? String(THREE.MathUtils.clamp((rect!.bottom - innerHeight * 0.4) / (innerHeight * 0.6), 0, 1)) : '0.23';
+      const progress = rect ? THREE.MathUtils.clamp(-rect.top / Math.max(1, rect.height - innerHeight), 0, 1) : 0;
+      const explode = reduced.matches ? 0.5 : THREE.MathUtils.smoothstep(progress, 0.12, 0.85);
+      const shatter = reduced.matches ? 0 : THREE.MathUtils.clamp(window.scrollY / innerHeight, 0, 1);
+      knot.visible = !inLab && shatter < 0.65; assembly.visible = inLab;
+      knot.scale.setScalar(Math.max(0.01, 1 - shatter));
+      shards.visible = !inLab && shatter > 0.01;
+      if (shards.visible) {
+        fragmentPositions.forEach((position, i) => {
+          dummy.position.copy(position).multiplyScalar(1 + shatter * 2.5);
+          dummy.rotation.set(i + shatter * 3, i * 0.4 + shatter, i * 0.8);
+          dummy.scale.setScalar(Math.sin(shatter * Math.PI) * 1.5);
+          dummy.updateMatrix(); shards.setMatrixAt(i, dummy.matrix);
+        });
+        shards.instanceMatrix.needsUpdate = true;
+      }
+      const mobile = innerWidth < 768;
+      root.position.set(inLab ? (mobile ? 0 : 1.8) : 0, inLab && mobile ? -0.75 : 0, 0);
+      root.scale.setScalar(inLab ? (mobile ? 0.48 : 0.9) : (mobile ? 0.8 : 1.4));
+      root.rotation.set(inLab ? 0.18 : 0.3, reduced.matches ? 0.4 : (inLab ? progress * 1.3 + pointer.x * 0.25 : time * 0.00008), inLab ? -0.22 : 0.1);
+      if (!reduced.matches) root.rotation.x += pointer.y * 0.12;
+      parts.forEach(({ mesh, y, spread }) => { mesh.position.y = y + spread * explode; });
+      renderer.render(scene, camera);
+    };
+    const visibility = () => { cancelAnimationFrame(frame); if (!document.hidden) frame = requestAnimationFrame(render); };
+    window.addEventListener('resize', resize); window.addEventListener('pointermove', move, { passive: true }); document.addEventListener('visibilitychange', visibility);
+    frame = requestAnimationFrame(render);
+    return () => {
+      disposed = true; cancelAnimationFrame(frame);
+      window.removeEventListener('resize', resize); window.removeEventListener('pointermove', move); document.removeEventListener('visibilitychange', visibility);
+      scene.traverse(object => { if (object instanceof THREE.Mesh) object.geometry.dispose(); });
+      [glass, metal, dark, glow].forEach(material => material.dispose()); environment.dispose(); renderer.dispose(); renderer.domElement.remove();
+    };
+  }, []);
+  return <div ref={host} className="sculpture-canvas" aria-hidden="true" />;
 }

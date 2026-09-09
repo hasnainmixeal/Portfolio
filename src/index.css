@@ -28,3 +28,38 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #444; 
 }
+.sculpture-canvas { position: fixed; inset: 0; z-index: 1; pointer-events: none; transition: opacity .35s; }
+.sculpture-canvas canvas { display: block; }
+.assembly-story { height: 240svh; position: relative; border-top: 1px solid #ffffff14; }
+.assembly-stage { height: 100svh; position: sticky; top: 0; overflow: hidden; padding: 11vh 7vw; }
+.assembly-grid { position: absolute; inset: 0; background-image: linear-gradient(#7ebfff07 1px, transparent 1px), linear-gradient(90deg, #7ebfff07 1px, transparent 1px); background-size: 64px 64px; mask-image: linear-gradient(transparent, black, transparent); pointer-events: none; }
+.assembly-heading { position: relative; max-width: 440px; }
+.lab-eyebrow, .assembly-caption, .assembly-bottom, .assembly-instruction { font-family: monospace; font-size: 10px; letter-spacing: .16em; }
+.lab-eyebrow { color: #8cd9f4; margin-bottom: 30px; }
+.assembly-heading h2 { font-family: var(--font-display); font-size: clamp(54px, 6.5vw, 100px); font-weight: 600; line-height: .98; letter-spacing: -.07em; }
+.assembly-heading h2 span { color: #92d5ec; }
+.lab-description { color: #9ba5b6; font-size: 15px; line-height: 1.8; max-width: 310px; margin-top: 28px; }
+.lab-link { display: inline-flex; gap: 36px; align-items: center; margin-top: 30px; padding-bottom: 10px; border-bottom: 1px solid #90cfff55; font-size: 12px; }
+.lab-link:hover { color: #92d5ec; }
+.assembly-caption { position: absolute; right: 7vw; top: 12vh; color: #bad2df; display: flex; align-items: center; gap: 10px; }
+.caption-secondary { color: #697b8c; margin-left: 16px; }
+.live-dot { width: 5px; height: 5px; border-radius: 50%; background: #86e2ff; box-shadow: 0 0 12px #86e2ff; }
+.assembly-bottom { position: absolute; bottom: 10vh; left: 7vw; right: 7vw; display: flex; align-items: center; gap: 24px; color: #9faabb; }
+.assembly-track { flex: 1; height: 1px; background: #ffffff20; }
+.assembly-track div { height: 100%; background: #94dfff; transform-origin: left; }
+.assembly-instruction { position: absolute; bottom: 5vh; left: 7vw; color: #617282; font-size: 9px; }
+@media (max-width: 767px) {
+  .assembly-stage { padding: 7vh 6vw; }
+  .assembly-heading h2 { font-size: 52px; }
+  .lab-eyebrow { margin-bottom: 18px; }
+  .lab-description { font-size: 12px; max-width: 270px; margin-top: 16px; }
+  .lab-link { margin-top: 14px; }
+  .assembly-caption { top: auto; bottom: 17vh; left: 7vw; font-size: 8px; }
+  .caption-secondary { margin-left: 4px; }
+  .assembly-bottom { font-size: 8px; gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .assembly-story { height: 110svh; }
+}

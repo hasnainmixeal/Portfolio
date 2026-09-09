@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ExternalLink, Linkedin, Mail, MapPin, X, Youtube } from 'lucide-react';
-import ThreeBackground from './components/ThreeBackground';
+import AssemblyStory from './components/AssemblyStory';
+const ThreeBackground = lazy(() => import('./components/ThreeBackground'));
 
 const assetUrl = (file: string) => {
   if (file === 'profile-pic.png' || file === 'profile-pic.webp') {
@@ -97,7 +98,7 @@ function WorkCarousel() {
   useEffect(() => {
     const animate = () => {
       const track = trackRef.current;
-      if (track && !isPausedRef.current && !isDraggingRef.current) {
+      if (track && !document.hidden && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && !isPausedRef.current && !isDraggingRef.current && track.getBoundingClientRect().top < window.innerHeight && track.getBoundingClientRect().bottom > 0) {
         track.scrollLeft += 0.55;
         normalizeScroll();
       }
@@ -254,8 +255,8 @@ function WorkCarousel() {
               <img
                 src={image.thumb}
                 alt={`Portfolio render ${image.id}`}
-                loading={image.id <= 6 ? 'eager' : 'lazy'}
-                fetchPriority={image.id <= 6 ? 'high' : 'auto'}
+                loading="lazy"
+                fetchPriority="low"
                 decoding="async"
                 draggable={false}
                 className="h-full w-full object-contain bg-black transition duration-500 group-hover:scale-[1.03]"
@@ -466,7 +467,7 @@ export default function App() {
           <div className="group h-full min-h-[280px] md:min-h-[400px] bg-zinc-900/60 border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)]">
             {project.image ? (
               <div className="absolute inset-0 z-0">
-                <img src={project.image} alt={project.title} loading="eager" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-100" />
+                <img src={project.image} alt={project.title} loading="lazy" decoding="async" className="w-full h-full object-cover opacity-100" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
               </div>
             ) : (
@@ -506,7 +507,7 @@ export default function App() {
         >
           {project.image ? (
             <div className="absolute inset-0 z-0">
-              <img src={project.image} alt={project.title} loading="eager" fetchPriority="high" decoding="async" className="w-full h-full object-cover opacity-100 transition-all duration-700 group-hover:opacity-40 group-hover:scale-105" />
+              <img src={project.image} alt={project.title} loading="lazy" decoding="async" className="w-full h-full object-cover opacity-100 transition-all duration-700 group-hover:opacity-40 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </div>
           ) : (
@@ -539,9 +540,9 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#050505] text-[#F5F5F5] font-sans flex flex-col overflow-hidden selection:bg-white/20">
+    <div className="relative min-h-screen bg-[#050505] text-[#F5F5F5] font-sans flex flex-col overflow-clip selection:bg-white/20">
       
-      {isMobile ? <StaticBackdrop /> : <ThreeBackground />}
+      <StaticBackdrop /><Suspense fallback={null}><ThreeBackground /></Suspense>
       
       {/* Navigation Overlay */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-24 px-6 md:px-12 lg:px-24 flex justify-end items-center mix-blend-difference pointer-events-none">
@@ -625,6 +626,7 @@ export default function App() {
           </motion.div>
         </section>
 
+        <AssemblyStory />
         {/* About Section */}
         <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24">
           <div className="flex flex-col md:flex-row gap-12 md:gap-16">
@@ -659,7 +661,7 @@ export default function App() {
                     ].map((sw, i) => (
                       <div key={i} className="flex items-center gap-4 px-6 py-3.5 rounded-xl border border-white/10 bg-zinc-900/60 backdrop-blur-md hover:bg-zinc-800 hover:border-white/30 transition-all duration-300 shadow-lg group">
                         <div className="w-7 h-7 flex items-center justify-center shrink-0">
-                          <img src={assetUrl(sw.file)} alt={sw.name} loading="eager" fetchPriority="high" decoding="async" className="max-w-full max-h-full object-contain filter group-hover:brightness-125 transition-all" onError={(e) => { e.currentTarget.style.display='none' }} />
+                          <img src={assetUrl(sw.file)} alt={sw.name} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain filter group-hover:brightness-125 transition-all" onError={(e) => { e.currentTarget.style.display='none' }} />
                         </div>
                         <span className="font-bold tracking-wide text-white/90 text-base">{sw.name}</span>
                       </div>
@@ -726,7 +728,7 @@ export default function App() {
         </section>
 
         {/* Projects Section */}
-        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative">
+        <section id="selected-projects" className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative">
           <div className="flex flex-col mb-16">
             <h2 className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-4">Featured Work</h2>
             <h3 className="text-5xl md:text-8xl font-black tracking-tighter w-full border-b border-white/10 pb-8 uppercase text-white/90">Key Projects</h3>
@@ -809,7 +811,7 @@ export default function App() {
             <div className="relative z-10 max-w-3xl">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] shrink-0">
-                <img src={assetUrl("Channel picture.jpg")} alt="Blendreall Channel" loading="eager" fetchPriority="high" decoding="async" className="w-full h-full object-cover" />
+                <img src={assetUrl("Channel picture.jpg")} alt="Blendreall Channel" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
                 <h4 className="text-2xl md:text-4xl font-bold text-white tracking-tight">@Blendreall</h4>
               </div>
