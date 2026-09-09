@@ -1,9 +1,13 @@
-# 3D experience and performance
+# Glass scene and loading
 
-The opening spiral uses local procedural geometry and an instanced shatter effect. The Form Exploration section uses one scroll-controlled assembly with 27 components; reversing scroll restores their original positions. Pointer movement adds a small change of perspective.
+The original torus-knot geometry, MeshTransmissionMaterial refraction settings, glass shards, and city reflection map are restored. The original 1K reflection map is served from public/environment/city.hdr instead of depending on raw.githack.com at runtime. A small generated studio environment lets the scene render while that map loads. The page and 3D code remain separate bundles, and images below the fold load lazily.
 
-The page and Three.js scene are separate bundles. The scene generates its own reflection environment; there are no model, texture, or HDR network requests. Materials approximate glass with reflections and transparency instead of expensive screen refraction. Rendering is capped at approximately 30 fps and 1.25 device pixel ratio, skips drawing outside the relevant sections, and stops while the document is hidden. Phone layouts use a smaller composition. Reduced-motion preferences disable the time-driven rotation, shatter and scroll explosion. Portfolio images below the fold load lazily, and the gallery only auto-scrolls while visible.
+The shatter follows the original 1500px scroll range. The entire scene smoothly fades from 750px to 1500px rather than switching to an assembly section. Scrolling back reverses the transition. Rendering stops after the scene is fully faded and when the document is hidden. Device pixel ratio is capped at 1.25. Refraction uses the original small render targets (192px for the spiral, 128px for shards) to preserve the original look without full-screen refraction buffers.
 
-Validation: TypeScript (`npm run lint`), production build (`npm run build`), desktop and 390px phone browser inspection, reversible scroll assembly, and browser error log inspection. Bundle gzip sizes are approximately 116 KB for the page and 133 KB for the separately loaded scene. These are build measurements, not a guarantee of load time on a particular connection or device.
+The added Form Exploration section has been removed. Core Expertise starts with 3D Modeling and ends with Social media marketing and Video editing.
 
-Deploy with the existing GitHub Pages Actions workflow on pushes to main. The generated site is in dist (intentionally ignored by Git).
+Validation: npm run lint, npm run build, browser inspection of the intact glass, early shatter, later fade and updated expertise, and browser console error inspection. Load time depends on the device and connection; no universal timing is claimed.
+
+Environment asset source: https://raw.githubusercontent.com/pmndrs/drei-assets/456060a26bbeb8fdf79326f224b6d99b8bcce736/hdri/potsdamer_platz_1k.hdr (the same asset used by the original Drei city preset).
+
+Deploy through the existing GitHub Pages workflow on pushes to main. The production build is in dist, which remains ignored by Git.

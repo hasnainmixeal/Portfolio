@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ExternalLink, Linkedin, Mail, MapPin, X, Youtube } from 'lucide-react';
-import AssemblyStory from './components/AssemblyStory';
+
 const ThreeBackground = lazy(() => import('./components/ThreeBackground'));
 
 const assetUrl = (file: string) => {
@@ -626,7 +626,7 @@ export default function App() {
           </motion.div>
         </section>
 
-        <AssemblyStory />
+
         {/* About Section */}
         <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24">
           <div className="flex flex-col md:flex-row gap-12 md:gap-16">
@@ -639,7 +639,7 @@ export default function App() {
                 <div>
                   <h3 className="text-2xl font-black tracking-tight mb-6 text-white/90 border-b border-white/10 pb-4 uppercase">Core Expertise</h3>
                   <div className="flex flex-col gap-3">
-                    {['VR Optimization', 'Environment Design', 'Lighting & Rendering', 'Real-Time Performance'].map((skill, i) => (
+                    {['3D Modeling', 'VR Optimization', 'Environment Design', 'Lighting & Rendering', 'Real-Time Performance', 'Social media marketing', 'Video editing'].map((skill, i) => (
                       <div key={i} className="px-6 py-4 rounded-xl border border-white/10 bg-zinc-900/40 backdrop-blur-sm font-bold tracking-wide text-white/80 text-lg hover:border-white/30 transition-colors shadow-lg">
                         {skill}
                       </div>
