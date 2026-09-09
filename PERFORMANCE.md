@@ -6,6 +6,8 @@ The spiral completes its shatter over the opening 1500px. The resulting shard fi
 
 Gallery cards use the intrinsic dimensions of all 37 thumbnails. Each card therefore matches its render's landscape, portrait, or square aspect ratio without adding black side areas.
 
+The gallery can be filtered into Game Environments, Props & Assets, and Archviz & Furniture while retaining an All Work view. The hero links directly to featured work and offers the supplied one-page résumé as a same-origin PDF download.
+
 The added Form Exploration section has been removed. Core Expertise starts with 3D Modeling and ends with Social media marketing and Video editing.
 
 Validation: npm run lint, npm run build, browser inspection of the intact glass, early shatter, later fade and updated expertise, and browser console error inspection. Load time depends on the device and connection; no universal timing is claimed.

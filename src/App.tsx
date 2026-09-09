@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ExternalLink, Linkedin, Mail, MapPin, X, Youtube } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, ExternalLink, Images, Linkedin, Mail, MapPin, X, Youtube } from 'lucide-react';
 
 const ThreeBackground = lazy(() => import('./components/ThreeBackground'));
 
@@ -33,6 +33,13 @@ const carouselImages = Array.from({ length: 37 }, (_, index) => {
     full: `${import.meta.env.BASE_URL}carousel/full/${id}.webp`,
   };
 });
+
+const galleryCategories = [
+  { id: 'all', label: 'All Work', images: carouselImages },
+  { id: 'environments', label: 'Game Environments', images: carouselImages.filter(({ id }) => id <= 10) },
+  { id: 'assets', label: 'Props & Assets', images: carouselImages.filter(({ id }) => (id >= 11 && id <= 18) || id >= 34) },
+  { id: 'archviz', label: 'Archviz & Furniture', images: carouselImages.filter(({ id }) => id >= 19 && id <= 33) },
+] as const;
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(() => {
@@ -75,8 +82,10 @@ function WorkCarousel() {
   const dragStartXRef = useRef(0);
   const dragStartScrollRef = useRef(0);
   const dragDistanceRef = useRef(0);
+  const [activeCategory, setActiveCategory] = useState<(typeof galleryCategories)[number]['id']>('all');
   const [activeImage, setActiveImage] = useState<(typeof carouselImages)[number] | null>(null);
-  const loopImages = [...carouselImages, ...carouselImages];
+  const categoryImages = galleryCategories.find(({ id }) => id === activeCategory)?.images ?? carouselImages;
+  const loopImages = [...categoryImages, ...categoryImages];
 
   // Performance-optimized scroll progress tracking using Framer Motion
   const progressX = useMotionValue(0);
@@ -101,6 +110,13 @@ function WorkCarousel() {
     resumeTimerRef.current = window.setTimeout(() => {
       isPausedRef.current = false;
     }, duration);
+  };
+
+  const selectCategory = (category: (typeof galleryCategories)[number]['id']) => {
+    setActiveCategory(category);
+    progressX.set(0);
+    if (trackRef.current) trackRef.current.scrollLeft = 0;
+    pauseBriefly(500);
   };
 
   const cardStep = () => {
@@ -234,10 +250,30 @@ function WorkCarousel() {
   };
 
   return (
-    <section className="py-20 md:py-24 border-t border-white/5 relative overflow-hidden">
+    <section id="selected-work" className="py-20 md:py-24 border-t border-white/5 relative overflow-hidden scroll-mt-20">
       <div className="px-6 md:px-12 lg:px-24 mb-10">
         <h2 className="text-[10px] uppercase tracking-[0.2em] text-cyan-300 font-bold mb-4">Visual Gallery</h2>
         <h3 className="text-5xl md:text-8xl font-black tracking-tighter uppercase text-white/90 border-b border-white/10 pb-8">Selected Work</h3>
+        <div className="mt-7 flex flex-wrap gap-2" role="group" aria-label="Filter selected work">
+          {galleryCategories.map((category) => {
+            const selected = category.id === activeCategory;
+            return (
+              <button
+                key={category.id}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => selectCategory(category.id)}
+                className={`rounded-full border px-4 py-2 text-[10px] font-bold uppercase tracking-[0.14em] transition md:px-5 ${
+                  selected
+                    ? 'border-cyan-300/70 bg-cyan-300 text-black shadow-[0_0_20px_rgba(103,232,249,0.2)]'
+                    : 'border-white/15 bg-black/30 text-white/55 hover:border-white/40 hover:text-white'
+                }`}
+              >
+                {category.label} <span className={selected ? 'text-black/55' : 'text-white/30'}>{category.images.length}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="relative">
@@ -621,8 +657,14 @@ export default function App() {
                 I’ve been creating 3D and VR experiences for over 4 years now — and I still enjoy bringing virtual worlds to life every single day. Whether it’s building immersive architectural walkthroughs, designing optimized VR environments, or creating interactive real-time experiences in Unreal Engine, I love turning ideas into visually engaging experiences people can explore and connect with.
               </motion.p>
             </motion.div>
-            <div className="flex items-center gap-6 mt-2 relative z-20">
-              <a href="#contact" className="group relative inline-flex items-center justify-center gap-4 px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-bold uppercase text-xs tracking-[0.2em] overflow-hidden transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] hover:scale-105">
+            <div className="flex flex-wrap items-center gap-2 mt-2 relative z-20">
+              <a href="#selected-projects" className="group relative inline-flex items-center justify-center gap-2 px-4 py-4 rounded-full border border-cyan-300/40 bg-cyan-300/10 text-cyan-100 font-bold uppercase text-[10px] tracking-[0.13em] backdrop-blur-md transition-all duration-300 hover:bg-cyan-300 hover:text-black hover:scale-105 md:px-5">
+                <span className="relative z-10 flex items-center gap-2">View Work <Images size={15}/></span>
+              </a>
+              <a href={`${import.meta.env.BASE_URL}Hassnain-Aly-Resume.pdf`} download="Hassnain Aly Resume.pdf" className="group relative inline-flex items-center justify-center gap-2 px-4 py-4 rounded-full border border-white/20 bg-black/50 text-white font-bold uppercase text-[10px] tracking-[0.13em] backdrop-blur-md transition-all duration-300 hover:border-white/50 hover:bg-white hover:text-black hover:scale-105 md:px-5">
+                <span className="relative z-10 flex items-center gap-2">Download Résumé <Download size={15}/></span>
+              </a>
+              <a href="#contact" className="group relative inline-flex items-center justify-center gap-2 px-4 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-bold uppercase text-[10px] tracking-[0.13em] overflow-hidden transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] hover:scale-105 md:px-5">
                 <span className="relative z-10 flex items-center gap-2">Let's Talk <Mail size={16}/></span>
               </a>
             </div>
