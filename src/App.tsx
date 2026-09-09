@@ -12,10 +12,23 @@ const assetUrl = (file: string) => {
   return `${import.meta.env.BASE_URL}optimized/${encodeURI(optimized)}`;
 };
 
+const carouselDimensions = [
+  [760, 404], [760, 404], [760, 404], [760, 404], [760, 404], [760, 404],
+  [760, 337], [760, 404], [753, 445], [749, 441], [690, 441], [760, 420],
+  [760, 420], [760, 420], [760, 420], [760, 658], [760, 508], [696, 444],
+  [443, 444], [446, 443], [760, 763], [760, 428], [760, 427], [760, 427],
+  [749, 443], [760, 427], [760, 425], [760, 427], [760, 427], [760, 761],
+  [760, 754], [760, 764], [760, 763], [760, 533], [760, 386], [760, 414],
+  [760, 410],
+] as const;
+
 const carouselImages = Array.from({ length: 37 }, (_, index) => {
   const id = index + 1;
+  const [width, height] = carouselDimensions[index];
   return {
     id,
+    width,
+    height,
     thumb: `${import.meta.env.BASE_URL}carousel/thumbs/${id}.webp`,
     full: `${import.meta.env.BASE_URL}carousel/full/${id}.webp`,
   };
@@ -250,7 +263,8 @@ function WorkCarousel() {
               onClick={() => {
                 if (dragDistanceRef.current < 8) setActiveImage(image);
               }}
-              className="group relative h-[230px] w-[78vw] max-w-[520px] shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-[0_24px_70px_rgba(0,0,0,0.45)] transition duration-300 hover:-translate-y-1 hover:border-white/35 md:h-[310px] md:w-[520px]"
+              style={{ aspectRatio: `${image.width} / ${image.height}` }}
+              className="group relative h-[230px] w-auto shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/80 shadow-[0_24px_70px_rgba(0,0,0,0.45)] transition duration-300 hover:-translate-y-1 hover:border-white/35 md:h-[310px]"
             >
               <img
                 src={image.thumb}
@@ -259,7 +273,9 @@ function WorkCarousel() {
                 fetchPriority="low"
                 decoding="async"
                 draggable={false}
-                className="h-full w-full object-contain bg-black transition duration-500 group-hover:scale-[1.03]"
+                width={image.width}
+                height={image.height}
+                className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
               />
             </button>
           ))}

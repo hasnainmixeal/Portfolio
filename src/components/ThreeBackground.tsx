@@ -102,8 +102,9 @@ function MainShape({ reduced }: { reduced: boolean }) {
                     const explosionProgress = Math.max(0, scrollPct - 0.1); 
                     const explodeEase = Math.pow(explosionProgress, 1.5);
                     
-                    const explodeDist = explodeEase * 30 * (frag.random + 0.2);
-                    const lift = explodeEase * 15;
+                    // Settle into a readable field that remains fixed behind the page.
+                    const explodeDist = explodeEase * 7 * (frag.random + 0.2);
+                    const lift = explodeEase * 3.5;
 
                     dummy.position.set(
                         frag.x + frag.nx * explodeDist,
@@ -122,9 +123,7 @@ function MainShape({ reduced }: { reduced: boolean }) {
                     if (scrollPct < 0.4) {
                         scale = (scrollPct / 0.4); 
                     } else {
-                        // Slowly scale down between 0.4 and 1.0 (length 0.6)
-                        const fadePct = (scrollPct - 0.4) / 0.6;
-                        scale = Math.max(0, 1 - Math.pow(fadePct, 2));
+                        scale = 1;
                     }
                     
                     dummy.scale.set(scale, scale, scale);
@@ -182,8 +181,10 @@ export default function ThreeBackground() {
     let frame = 0;
     const update = () => {
       frame = 0;
-      const progress = THREE.MathUtils.clamp(window.scrollY / 1500, 0, 1);
-      const fade = 1 - THREE.MathUtils.smoothstep(progress, 0.5, 1);
+      const scrollRange = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      const progress = THREE.MathUtils.clamp(window.scrollY / scrollRange, 0, 1);
+      // Keep the shard field throughout the portfolio, then fade during the final 8%.
+      const fade = 1 - THREE.MathUtils.smoothstep(progress, 0.92, 1);
       if (container.current) container.current.style.opacity = String(0.5 * fade);
       setActive(!document.hidden && progress < 1);
       setReduced(media.matches);

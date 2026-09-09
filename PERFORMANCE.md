@@ -2,7 +2,9 @@
 
 The original torus-knot geometry, MeshTransmissionMaterial refraction settings, glass shards, and city reflection map are restored. The original 1K reflection map is served from public/environment/city.hdr instead of depending on raw.githack.com at runtime. A small generated studio environment lets the scene render while that map loads. The page and 3D code remain separate bundles, and images below the fold load lazily.
 
-The shatter follows the original 1500px scroll range. The entire scene smoothly fades from 750px to 1500px rather than switching to an assembly section. Scrolling back reverses the transition. Rendering stops after the scene is fully faded and when the document is hidden. Device pixel ratio is capped at 1.25. Refraction uses the original small render targets (192px for the spiral, 128px for shards) to preserve the original look without full-screen refraction buffers.
+The spiral completes its shatter over the opening 1500px. The resulting shard field remains fixed behind the portfolio and fades during the final 8% of the document. Scrolling back reverses the transition. Rendering stops after the scene is fully faded and when the document is hidden. Device pixel ratio is capped at 1.25. Refraction uses the original small render targets (192px for the spiral, 128px for shards) to preserve the original look without full-screen refraction buffers.
+
+Gallery cards use the intrinsic dimensions of all 37 thumbnails. Each card therefore matches its render's landscape, portrait, or square aspect ratio without adding black side areas.
 
 The added Form Exploration section has been removed. Core Expertise starts with 3D Modeling and ends with Social media marketing and Video editing.
 
