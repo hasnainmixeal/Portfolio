@@ -598,8 +598,10 @@ export default function App() {
       
       {/* Navigation Overlay */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-24 px-6 md:px-12 lg:px-24 flex justify-end items-center mix-blend-difference pointer-events-none">
-        <div className="flex gap-12 text-sm font-medium tracking-widest text-white/50 uppercase pointer-events-auto">
-          <a href="#contact" className="hover:text-white transition-colors">Contact</a>
+        <div className="flex items-center gap-4 text-[10px] font-medium tracking-[0.14em] text-white/55 uppercase pointer-events-auto sm:gap-6 md:gap-8 md:text-xs">
+          <a href="#selected-projects" className="hover:text-white transition-colors">Work</a>
+          <a href="#experience" className="hover:text-white transition-colors">Experience</a>
+          <a href={`${import.meta.env.BASE_URL}Hassnain-Aly-Resume.pdf`} download="Hassnain Aly Resume.pdf" className="hover:text-white transition-colors">Résumé</a>
         </div>
       </nav>
 
@@ -674,14 +676,6 @@ export default function App() {
             <HeroCard interactive={!isMobile} />
           </div>
 
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1 }}
-            className="absolute bottom-12 left-12 md:left-24 italic font-serif text-[10px] text-white/40 uppercase tracking-[0.2em]"
-          >
-            Scroll to explore
-          </motion.div>
         </section>
 
 
@@ -732,7 +726,7 @@ export default function App() {
         </section>
 
         {/* Experience Section */}
-        <section className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative">
+        <section id="experience" className="py-20 md:py-24 px-6 md:px-12 lg:px-24 border-t border-white/5 relative scroll-mt-20">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
             <div className="md:col-span-4 sticky top-32 self-start">
               <h2 className="text-[10px] uppercase tracking-[0.2em] text-purple-400 font-bold mb-4 flex items-center gap-3">
@@ -889,8 +883,8 @@ export default function App() {
         </section>
 
         {/* Footer / Contact */}
-        <footer id="contact" className="relative z-10 py-20 px-6 md:px-12 lg:px-24 border-t border-white/5 bg-black/50">
-          <div className="flex flex-col items-center flex-wrap">
+        <footer id="contact" className="relative z-10 flex min-h-svh items-center py-20 px-6 md:px-12 lg:px-24 border-t border-white/5 bg-black/50">
+          <div className="flex w-full flex-col items-center flex-wrap">
             <h2 className="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-12">Let's connect</h2>
             <div className="flex flex-col md:flex-row gap-8 md:gap-16 font-bold tracking-widest text-xs md:text-sm uppercase items-center">
                <a href="mailto:hassnainaly30@gmail.com" className="hover:text-blue-400 transition-colors flex items-center gap-3"><Mail size={20} className="text-blue-500"/> hassnainaly30@gmail.com</a>

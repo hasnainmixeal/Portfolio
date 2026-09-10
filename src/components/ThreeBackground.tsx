@@ -79,6 +79,10 @@ function MainShape({ reduced }: { reduced: boolean }) {
     useFrame((state) => {
         const scrollY = window.scrollY || 0;
         const scrollPct = reduced ? 0 : Math.min(Math.max(scrollY / 1500, 0), 1);
+        const contactTop = document.getElementById('contact')?.getBoundingClientRect().top ?? window.innerHeight;
+        const contactVisibility = (window.innerHeight - contactTop) / (window.innerHeight * 0.65);
+        // The contact section is centered, so shards contract towards its CTA as it enters view.
+        const gatherProgress = reduced ? 0 : THREE.MathUtils.smoothstep(contactVisibility, 0.1, 0.75);
         const baseRotX = reduced ? 0.1 : Math.sin(state.clock.elapsedTime * 0.2) * 0.2;
         const baseRotY = reduced ? 0.4 : state.clock.elapsedTime * 0.2;
 
@@ -111,6 +115,12 @@ function MainShape({ reduced }: { reduced: boolean }) {
                         frag.y + frag.ny * explodeDist + lift,
                         frag.z + frag.nz * explodeDist
                     );
+
+                    if (gatherProgress > 0) {
+                        dummy.position.x += (frag.x * 0.45 - dummy.position.x) * gatherProgress;
+                        dummy.position.y += (frag.y * 0.45 - dummy.position.y) * gatherProgress;
+                        dummy.position.z += (frag.z * 0.45 - dummy.position.z) * gatherProgress;
+                    }
                     
                     const rotSpeed = explodeEase * frag.random * 6;
                     dummy.rotation.set(
@@ -126,6 +136,7 @@ function MainShape({ reduced }: { reduced: boolean }) {
                         scale = 1;
                     }
                     
+                    scale *= 1 - gatherProgress * 0.35;
                     dummy.scale.set(scale, scale, scale);
                     dummy.updateMatrix();
                     shardsRef.current!.setMatrixAt(i, dummy.matrix);
@@ -183,8 +194,8 @@ export default function ThreeBackground() {
       frame = 0;
       const scrollRange = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       const progress = THREE.MathUtils.clamp(window.scrollY / scrollRange, 0, 1);
-      // Keep the shard field throughout the portfolio, then fade during the final 8%.
-      const fade = 1 - THREE.MathUtils.smoothstep(progress, 0.92, 1);
+      // Keep the gathered shard field visible at contact, then fade at the absolute end.
+      const fade = 1 - THREE.MathUtils.smoothstep(progress, 0.98, 1);
       if (container.current) container.current.style.opacity = String(0.5 * fade);
       setActive(!document.hidden && progress < 1);
       setReduced(media.matches);
