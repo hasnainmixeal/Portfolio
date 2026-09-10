@@ -54,6 +54,7 @@ function Particles() {
 function MainShape({ reduced }: { reduced: boolean }) {
     const solidRef = useRef<THREE.Mesh>(null);
     const shardsRef = useRef<THREE.InstancedMesh>(null);
+    const contactTransition = useRef(0);
     const dummy = useMemo(() => new THREE.Object3D(), []);
     const solidDetail: [number, number] = [96, 24];
     const shardSampleStep = 10;
@@ -76,14 +77,15 @@ function MainShape({ reduced }: { reduced: boolean }) {
         return frags;
     }, []);
 
-    useFrame((state) => {
+    useFrame((state, delta) => {
         const scrollY = window.scrollY || 0;
         const scrollPct = reduced ? 0 : Math.min(Math.max(scrollY / 1500, 0), 1);
         const contactTop = document.getElementById('contact')?.getBoundingClientRect().top ?? window.innerHeight;
         const contactVisibility = (window.innerHeight - contactTop) / (window.innerHeight * 0.65);
-        // The contact section calls the shards down from above before they form its frame.
-        const contactArrival = reduced ? 0 : THREE.MathUtils.smoothstep(contactVisibility, -0.35, 0.7);
-        const orbitProgress = reduced ? 0 : THREE.MathUtils.smoothstep(contactVisibility, 0.04, 0.7);
+        const contactTarget = reduced ? 0 : THREE.MathUtils.smoothstep(contactVisibility, -0.4, 0.85);
+        // Damp the scroll target so fast wheel movement cannot snap the shard field into place.
+        contactTransition.current = THREE.MathUtils.damp(contactTransition.current, contactTarget, 1.25, delta);
+        const orbitProgress = contactTransition.current;
         const baseRotX = reduced ? 0.1 : Math.sin(state.clock.elapsedTime * 0.2) * 0.2;
         const baseRotY = reduced ? 0.4 : state.clock.elapsedTime * 0.2;
 
@@ -97,8 +99,9 @@ function MainShape({ reduced }: { reduced: boolean }) {
         }
 
         if (shardsRef.current) {
-            shardsRef.current.rotation.x = baseRotX;
-            shardsRef.current.rotation.y = baseRotY;
+            // Remove the scene rotation during the contact transition so the frame faces the viewer.
+            shardsRef.current.rotation.x = baseRotX * (1 - orbitProgress);
+            shardsRef.current.rotation.y = baseRotY * (1 - orbitProgress);
             shardsRef.current.visible = scrollPct > 0;
 
             if (scrollPct > 0) {
@@ -117,18 +120,18 @@ function MainShape({ reduced }: { reduced: boolean }) {
                         frag.z + frag.nz * explodeDist
                     );
 
-                    if (contactArrival > 0) {
-                        const orbitAngle = frag.random * Math.PI * 2 + state.clock.elapsedTime * (0.28 + frag.random * 0.2);
+                    if (orbitProgress > 0) {
+                        const orbitAngle = (i / fragments.length) * Math.PI * 2 + frag.random * 0.12 + state.clock.elapsedTime * 0.085;
                         const cosine = Math.cos(orbitAngle);
                         const sine = Math.sin(orbitAngle);
-                        // A soft superellipse creates a wide rounded frame for the CTA.
-                        const orbitX = Math.sign(cosine) * Math.pow(Math.abs(cosine), 0.55) * (4.35 + frag.random * 1.65);
-                        const frameY = Math.sign(sine) * Math.pow(Math.abs(sine), 0.55) * (2.25 + frag.random * 1.2);
-                        const orbitY = frameY + (1 - contactArrival) * 8.5;
-                        const orbitZ = Math.sin(orbitAngle * 2 + frag.random * 8) * 1.6;
-                        dummy.position.x += (orbitX - dummy.position.x) * contactArrival;
-                        dummy.position.y += (orbitY - dummy.position.y) * contactArrival;
-                        dummy.position.z += (orbitZ - dummy.position.z) * contactArrival;
+                        // A compact, shallow superellipse closely encloses the contact content.
+                        const orbitX = Math.sign(cosine) * Math.pow(Math.abs(cosine), 0.62) * (2.52 + frag.random * 0.28);
+                        const orbitY = Math.sign(sine) * Math.pow(Math.abs(sine), 0.62) * (0.84 + frag.random * 0.14);
+                        const orbitZ = 2.15 + Math.sin(orbitAngle * 2 + frag.random * 8) * 0.18;
+                        const arrivalArc = Math.sin(orbitProgress * Math.PI) * 1.8;
+                        dummy.position.x += (orbitX - dummy.position.x) * orbitProgress;
+                        dummy.position.y += (orbitY - dummy.position.y) * orbitProgress + arrivalArc;
+                        dummy.position.z += (orbitZ - dummy.position.z) * orbitProgress;
                     }
                     
                     const rotSpeed = explodeEase * frag.random * 6;
@@ -156,7 +159,8 @@ function MainShape({ reduced }: { reduced: boolean }) {
     });
 
     return (
-        <Float speed={reduced ? 0 : 2} rotationIntensity={0.2} floatIntensity={0.5}>
+        <>
+          <Float speed={reduced ? 0 : 2} rotationIntensity={0.2} floatIntensity={0.5}>
             <mesh ref={solidRef} scale={1.2}>
             <torusKnotGeometry args={[1.5, 0.4, solidDetail[0], solidDetail[1]]} />
             <MeshTransmissionMaterial 
@@ -165,15 +169,16 @@ function MainShape({ reduced }: { reduced: boolean }) {
                     temporalDistortion={0.1} color="#ffffff" resolution={192}
                 />
             </mesh>
-            <instancedMesh ref={shardsRef} args={[undefined, undefined, fragments.length]} visible={false} scale={1.2}>
-                <tetrahedronGeometry args={[0.08, 0]} />
-                <MeshTransmissionMaterial 
-                    backside samples={1} thickness={0.5} chromaticAberration={0.05}
-                    anisotropy={0.1} distortion={0.5} distortionScale={0.5}
-                    temporalDistortion={0.1} color="#ffffff" resolution={128}
-                />
-            </instancedMesh>
-        </Float>
+          </Float>
+          <instancedMesh ref={shardsRef} args={[undefined, undefined, fragments.length]} visible={false} scale={1.2}>
+              <tetrahedronGeometry args={[0.08, 0]} />
+              <MeshTransmissionMaterial
+                  backside samples={1} thickness={0.5} chromaticAberration={0.05}
+                  anisotropy={0.1} distortion={0.5} distortionScale={0.5}
+                  temporalDistortion={0.1} color="#ffffff" resolution={128}
+              />
+          </instancedMesh>
+        </>
     )
 }
 
@@ -201,8 +206,13 @@ export default function ThreeBackground() {
     let frame = 0;
     const update = () => {
       frame = 0;
-      // The orbit remains visible through the contact section rather than fading away.
-      if (container.current) container.current.style.opacity = '0.5';
+      const contactBounds = document.getElementById('contact')?.getBoundingClientRect();
+      const contactIsEntering = Boolean(contactBounds && contactBounds.top < window.innerHeight * 0.82 && contactBounds.bottom > 0);
+      if (container.current) {
+        container.current.style.opacity = '0.5';
+        // Put the glass in front only for the contact finale; pointer events remain disabled.
+        container.current.style.zIndex = contactIsEntering ? '20' : '1';
+      }
       setActive(!document.hidden);
       setReduced(media.matches);
     };
