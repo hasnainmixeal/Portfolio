@@ -81,8 +81,9 @@ function MainShape({ reduced }: { reduced: boolean }) {
         const scrollPct = reduced ? 0 : Math.min(Math.max(scrollY / 1500, 0), 1);
         const contactTop = document.getElementById('contact')?.getBoundingClientRect().top ?? window.innerHeight;
         const contactVisibility = (window.innerHeight - contactTop) / (window.innerHeight * 0.65);
-        // As the contact section enters, the shards form a moving frame around it.
-        const orbitProgress = reduced ? 0 : THREE.MathUtils.smoothstep(contactVisibility, 0.02, 0.7);
+        // The contact section calls the shards down from above before they form its frame.
+        const contactArrival = reduced ? 0 : THREE.MathUtils.smoothstep(contactVisibility, -0.35, 0.7);
+        const orbitProgress = reduced ? 0 : THREE.MathUtils.smoothstep(contactVisibility, 0.04, 0.7);
         const baseRotX = reduced ? 0.1 : Math.sin(state.clock.elapsedTime * 0.2) * 0.2;
         const baseRotY = reduced ? 0.4 : state.clock.elapsedTime * 0.2;
 
@@ -116,16 +117,18 @@ function MainShape({ reduced }: { reduced: boolean }) {
                         frag.z + frag.nz * explodeDist
                     );
 
-                    if (orbitProgress > 0) {
+                    if (contactArrival > 0) {
                         const orbitAngle = frag.random * Math.PI * 2 + state.clock.elapsedTime * (0.28 + frag.random * 0.2);
-                        const orbitRadiusX = 3.9 + frag.random * 2.2;
-                        const orbitRadiusY = 2.3 + frag.random * 1.4;
-                        const orbitX = Math.cos(orbitAngle) * orbitRadiusX;
-                        const orbitY = Math.sin(orbitAngle) * orbitRadiusY;
+                        const cosine = Math.cos(orbitAngle);
+                        const sine = Math.sin(orbitAngle);
+                        // A soft superellipse creates a wide rounded frame for the CTA.
+                        const orbitX = Math.sign(cosine) * Math.pow(Math.abs(cosine), 0.55) * (4.35 + frag.random * 1.65);
+                        const frameY = Math.sign(sine) * Math.pow(Math.abs(sine), 0.55) * (2.25 + frag.random * 1.2);
+                        const orbitY = frameY + (1 - contactArrival) * 8.5;
                         const orbitZ = Math.sin(orbitAngle * 2 + frag.random * 8) * 1.6;
-                        dummy.position.x += (orbitX - dummy.position.x) * orbitProgress;
-                        dummy.position.y += (orbitY - dummy.position.y) * orbitProgress;
-                        dummy.position.z += (orbitZ - dummy.position.z) * orbitProgress;
+                        dummy.position.x += (orbitX - dummy.position.x) * contactArrival;
+                        dummy.position.y += (orbitY - dummy.position.y) * contactArrival;
+                        dummy.position.z += (orbitZ - dummy.position.z) * contactArrival;
                     }
                     
                     const rotSpeed = explodeEase * frag.random * 6;
