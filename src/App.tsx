@@ -745,7 +745,7 @@ export default function App() {
                   </div>
                   <div className="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] p-8 rounded-2xl bg-zinc-900/60 border border-white/10 backdrop-blur-md transition-all duration-500 hover:bg-zinc-800 hover:border-white/30 hover:shadow-2xl hover:-translate-y-1 group-hover:shadow-[0_10px_40px_-10px_rgba(37,99,235,0.2)]">
                     <div className="flex flex-col gap-2 mb-6">
-                      <span className="text-xs font-mono text-blue-400 tracking-widest uppercase font-semibold">Feb 2021 - Present</span>
+                      <span className="text-xs font-mono text-blue-400 tracking-widest uppercase font-semibold">Feb 2023 - Present</span>
                       <h3 className="text-2xl font-bold tracking-tight text-white/90">3D Artist <br/><span className="text-white/40 font-medium text-lg">@ Mixeal</span></h3>
                     </div>
                     <ul className="text-white/60 space-y-4 text-sm leading-relaxed">
